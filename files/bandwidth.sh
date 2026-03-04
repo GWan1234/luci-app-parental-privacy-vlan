@@ -1,6 +1,7 @@
 #!/bin/sh
 
-IFACE="br-lan.10" # Ensure this matches your kids network interface name
+_vlan=$(uci -q get parental_privacy.default.vlan_id)
+IFACE="br-lan.${_vlan:-10}"
 
 clean_up() {
     tc qdisc del dev "$IFACE" root 2>/dev/null
@@ -30,3 +31,4 @@ else
     apply_limit "$1"
 
 fi
+
