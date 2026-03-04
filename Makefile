@@ -18,7 +18,7 @@ define Package/luci-app-parental-privacy-vlan
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=Parental Privacy Wizard (VLAN edition)
-  DEPENDS:=+luci-base +tc-full +kmod-sched-core +nftables
+  DEPENDS:=+luci-base +nftables
   PKGARCH:=all
 endef
 
@@ -47,8 +47,7 @@ define Package/luci-app-parental-privacy-vlan/install
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/button
 	$(INSTALL_DIR) $(1)/etc/init.d
 
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/parental-privacy $(1)/etc/init.d/parental-privacy
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/bandwidth.sh $(1)/usr/share/parental-privacy/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/parental-privacy.init $(1)/etc/init.d/parental-privacy
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/block-doh.sh $(1)/usr/share/parental-privacy/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/safesearch.sh $(1)/usr/share/parental-privacy/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/remove.sh $(1)/usr/share/parental-privacy/
