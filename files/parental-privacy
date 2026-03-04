@@ -1,39 +1,31 @@
 #!/bin/sh /etc/rc.common
 
-# START=95 ensures it runs after firewall and network are fully up[cite: 20, 24].
+# START=95 ensures this runs after firewall and network are fully up.
+# STOP=10 ensures clean teardown before network goes down on shutdown.
 START=95
-USE_PROCD=1
+STOP=10
 
-start_service() {
-    procd_open_instance
-    
-    # 1. Re-apply SafeSearch (dnsmasq config) 
+start() {
+    # Re-apply SafeSearch (writes dnsmasq config and reloads dnsmasq)
     /usr/share/parental-privacy/safesearch.sh enable
 
-    # 2. Re-apply DoH Blocking (nftables/iptables) 
+    # Re-apply DoH blocking rules (nftables or iptables)
     /usr/share/parental-privacy/block-doh.sh enable
-    
-    # 3. Re-apply Bandwidth limits via 'tc'
-    # Pulls the limit directly from your UCI config
-    LIMIT=$(uci -q get parental_privacy.default.bandwidth)
-    if [ -n "$LIMIT" ]; then
-        /usr/share/parental-privacy/bandwidth.sh "$LIMIT"
-    fi
 
-    # procd manages the process; since these are scripts that exit,
-    # we don't need to specify a running command here.
-    procd_close_instance
+    # Re-apply bandwidth shaping if a limit is configured
+    local LIMIT
+    LIMIT=$(uci -q get parental_privacy.default.bandwidth)
+    [ -n "$LIMIT" ] && /usr/share/parental-privacy/bandwidth.sh "$LIMIT"
 }
 
-stop_service() {
-    # Clean up when service is stopped or router shuts down 
+stop() {
     /usr/share/parental-privacy/block-doh.sh disable
     /usr/share/parental-privacy/bandwidth.sh off
     /usr/share/parental-privacy/safesearch.sh disable
 }
 
-service_triggers() {
-    # If the firewall reloads, it wipes manual rules. 
-    # This trigger tells procd to run start_service again.
-    procd_add_reload_trigger "firewall" "network" "parental_privacy"
+reload() {
+    # Called by procd_add_reload_trigger when firewall/network/parental_privacy
+    # UCI config changes — re-apply all rules so they survive a firewall restart.
+    start
 }

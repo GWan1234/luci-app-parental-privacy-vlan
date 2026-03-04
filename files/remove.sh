@@ -39,10 +39,10 @@ fi
 # ── SafeSearch dnsmasq config ─────────────────────────────────────────────────
 rm -f /etc/dnsmasq.d/safesearch.conf
 
-# ── Extend timer — kill any running background timer ─────────────────────────
-if [ -f /var/run/kids-extend.pid ]; then
-    kill "$(cat /var/run/kids-extend.pid)" 2>/dev/null
-    rm -f /var/run/kids-extend.pid
+# ── Extend timer — remove any scheduled one-shot extension entry ──────────────
+if [ -f /etc/crontabs/root ]; then
+    sed -i '/#kids-extend/d' /etc/crontabs/root
+    /etc/init.d/cron reload 2>/dev/null
 fi
 
 # ── DoH rules — clean up any nftables/iptables rules ─────────────────────────

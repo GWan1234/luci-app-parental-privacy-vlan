@@ -62,37 +62,93 @@ function action_status()
 end
 
 -- ──────────────────────────────────────────────────────────────────
--- Extension: Forced ON for 1 hour via background timer
+-- Extension: Forced ON for 1 hour via a one-shot cron entry.
+--
+-- A single cron line is written that fires at (now + 1 hour), disables
+-- the kids WiFi, and then removes itself from /etc/crontabs/root.
+-- Using cron avoids backgrounded shell subprocesses and PID files;
+-- the timer survives across process and HTTP request boundaries and
+-- is visible to the operator via `crontab -l`.
 -- ──────────────────────────────────────────────────────────────────
 function action_extend()
     local sys  = require "luci.sys"
     local uci  = require("luci.model.uci").cursor()
     local json = require "luci.jsonc"
 
+    -- Enable kids WiFi on all configured bands
     local function enable_all(state)
         uci:set("wireless", "kids_wifi", "disabled", state)
         if uci:get("wireless", "kids_wifi_5g") then uci:set("wireless", "kids_wifi_5g", "disabled", state) end
         if uci:get("wireless", "kids_wifi_6g") then uci:set("wireless", "kids_wifi_6g", "disabled", state) end
+        uci:commit("wireless")
     end
 
-    -- Kill any existing extend timer before starting a new one
-    local PIDFILE = "/var/run/kids-extend.pid"
-    local pf = io.open(PIDFILE, "r")
-    if pf then
-        local old_pid = pf:read("*l")
-        pf:close()
-        if old_pid then sys.call("kill " .. old_pid .. " 2>/dev/null") end
+    -- Calculate the UTC time one hour from now for the cron expression.
+    -- `date -u` is available on all OpenWrt builds (busybox date).
+    local h = tonumber(sys.exec("date -u +%H"):match("%d+")) or 0
+    local m = tonumber(sys.exec("date -u +%M"):match("%d+")) or 0
+    local d = tonumber(sys.exec("date -u +%d"):match("%d+")) or 1
+    local mo = tonumber(sys.exec("date -u +%m"):match("%d+")) or 1
+
+    local fire_h = (h + 1) % 24
+    -- If the hour rolls past midnight, advance the day-of-month.
+    -- Using day+month (not day-of-week) is simpler and unambiguous.
+    local fire_d = d
+    local fire_mo = mo
+    if h + 1 >= 24 then
+        -- Advance date by one day; let the shell handle month wrap via `date`
+        local next_day = sys.exec("date -u -d 'tomorrow' '+%d %m' 2>/dev/null"):match("(%d+)%s+(%d+)")
+        if next_day then
+            fire_d, fire_mo = next_day:match("(%d+)%s+(%d+)")
+            fire_d  = tonumber(fire_d)  or d
+            fire_mo = tonumber(fire_mo) or mo
+        end
     end
 
+    -- Build the disable command; sync all detected bands
+    local disable_cmd = "uci set wireless.kids_wifi.disabled=1"
+    if uci:get("wireless", "kids_wifi_5g") then
+        disable_cmd = disable_cmd .. " && uci set wireless.kids_wifi_5g.disabled=1"
+    end
+    if uci:get("wireless", "kids_wifi_6g") then
+        disable_cmd = disable_cmd .. " && uci set wireless.kids_wifi_6g.disabled=1"
+    end
+    disable_cmd = disable_cmd .. " && uci commit wireless && wifi reload"
+
+    -- The cron entry removes itself after firing so it is truly one-shot.
+    -- The marker comment lets us identify and replace it on repeated calls.
+    local MARKER = "#kids-extend"
+    local cron_line = string.format(
+        "%d %d %d %d * %s && sed -i '/%s/d' /etc/crontabs/root && /etc/init.d/cron reload  %s",
+        m, fire_h, fire_d, fire_mo, disable_cmd, MARKER, MARKER
+    )
+
+    -- Replace any previous extend entry, then append the new one
+    local new_cron = {}
+    local cf = io.open("/etc/crontabs/root", "r")
+    if cf then
+        for line in cf:lines() do
+            if not line:find(MARKER, 1, true) then
+                table.insert(new_cron, line)
+            end
+        end
+        cf:close()
+    end
+    table.insert(new_cron, cron_line)
+
+    local wf = io.open("/etc/crontabs/root", "w")
+    if not wf then
+        luci.http.prepare_content("application/json")
+        luci.http.write(json.stringify({success=false, error="could not write crontab"}))
+        return
+    end
+    for _, line in ipairs(new_cron) do wf:write(line .. "\n") end
+    wf:close()
+    sys.call("/etc/init.d/cron reload")
+
+    -- Enable WiFi immediately
     enable_all("0")
-    uci:commit("wireless")
     sys.call("wifi reload")
-
-    -- Temporary background timer with PID tracking
-    sys.call(string.format(
-        "(sleep 3600 && uci set wireless.kids_wifi.disabled=1 && wifi reload) & echo $! > %s",
-        PIDFILE
-    ))
 
     luci.http.prepare_content("application/json")
     luci.http.write(json.stringify({success=true, message="1-hour extension active"}))
