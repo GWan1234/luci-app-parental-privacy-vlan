@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kids Network - Parental Privacy</title>
+<title><%:Kids Network%> - <%:Parental Privacy%></title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -192,42 +192,42 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
 
 <div class="luci-bar">
   <span class="brand">OpenWrt</span>
-  <span class="sep">/</span><span>Network</span>
+  <span class="sep">/</span><span><%:Network%></span>
   <span class="sep">/</span>
-  <span class="crumb-active">Kids Network</span>
+  <span class="crumb-active"><%:Kids Network%></span>
   <span style="margin-left:auto">
-    <span id="unsaved-badge" class="unsaved-badge" style="display:none">&#9679; unsaved changes</span>
+    <span id="unsaved-badge" class="unsaved-badge" style="display:none">&#9679; unsaved changes#9679; <%:unsaved changes%></span>
   </span>
 </div>
 
 <div class="page">
   <div class="page-header">
     <div class="page-title">
-      <h1>&#129358; Kids Network</h1>
-      <p>All settings for your isolated children&apos;s WiFi &mdash; managed in one place.</p>
+      <h1><h1>&#129358; Kids Network</h1>#129358; <%:Kids Network%></h1>
+      <p><%:All settings for your isolated children's WiFi — managed in one place.%></p>
     </div>
     <div class="master-toggle" onclick="toggleMaster()">
       <div class="pill-switch on" id="master-switch"></div>
-      <span style="font-size:.88rem;font-weight:500" id="master-label">Kids WiFi Active</span>
+      <span style="font-size:.88rem;font-weight:500" id="master-label"><%:Kids WiFi Active%></span>
     </div>
   </div>
 
   <div class="status-bar">
     <div class="stat-card green">
       <div class="stat-val c-green" id="stat-devices">3</div>
-      <div class="stat-key">Devices Online</div>
+      <div class="stat-key"><%:Devices Online%></div>
     </div>
     <div class="stat-card blue">
       <div class="stat-val c-blue" id="stat-ssid" style="font-size:1.1rem;margin-top:.15rem">_Kids_WiFi</div>
-      <div class="stat-key">Active SSID</div>
+      <div class="stat-key"><%:Active SSID%></div>
     </div>
     <div class="stat-card orange">
       <div class="stat-val c-orange" id="stat-dns" style="font-size:1rem;margin-top:.15rem">1.1.1.3</div>
-      <div class="stat-key">DNS Resolver</div>
+      <div class="stat-key"><%:DNS Resolver%></div>
     </div>
     <div class="stat-card purple">
       <div class="stat-val c-purple" id="stat-schedule" style="font-size:1rem;margin-top:.15rem">ON until 21:00</div>
-      <div class="stat-key">Schedule</div>
+      <div class="stat-key"><%:Schedule%></div>
     </div>
   </div>
 
@@ -235,67 +235,67 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('wifi')">
       <span class="panel-icon">&#128225;</span>
-      <span class="panel-title">WiFi Settings</span>
-      <span class="panel-subtitle">SSID, password, band</span>
+      <span class="panel-title"><%:WiFi Settings%></span>
+      <span class="panel-subtitle"><%:SSID, password, band%></span>
       <span class="panel-chevron open" id="chevron-wifi">&#9660;</span>
     </div>
     <div class="panel-body" id="body-wifi">
       <div class="grid-2">
         <div class="field">
-          <label>SSID &mdash; Network Name</label>
+          <label><%:SSID — Network Name%></label>
           <input type="text" id="wifi-ssid" value="_Kids_WiFi" oninput="markUnsaved()">
           <p class="hint">
             <a href="#" onclick="useSuggestedSSID(); return false;" id="ssid-suggest-link" style="color:var(--accent); text-decoration:none;">
-              &#8634; Use suggested name: <span id="ssid-suggestion-text">...</span>
+              &#8634; <%:Use suggested name:%> <span id="ssid-suggestion-text">...</span>
             </a>
           </p>
         </div>
         <div class="field">
-          <label>Password</label>
-          <input type="password" id="wifi-pwd" value="SafeFamily2024!" oninput="markUnsaved()" placeholder="min. 8 characters">
-          <p class="hint">Minimum 8 characters for WPA2-PSK encryption.</p>
+          <label><%:Password%></label>
+          <input type="password" id="wifi-pwd" value="SafeFamily2024!" oninput="markUnsaved()" placeholder="<%:min. 8 characters%>">
+          <p class="hint"><%:Minimum 8 characters for WPA2-PSK encryption.%></p>
         </div>
       </div>
       <hr class="divider">
-      <div class="field-label" style="margin-bottom:.6rem">Frequency Band</div>
+      <div class="field-label" style="margin-bottom:.6rem"><%:Frequency Band%></div>
       <div class="radio-row">
         <div class="radio-card selected" onclick="pickRadio(this,'radio0')">
           <input type="radio" name="radio" value="radio0" checked>
-          <div class="radio-name">2.4 GHz</div>
+          <div class="radio-name"><%:2.4 GHz%></div>
           <div class="radio-freq">radio0</div>
-          <div class="radio-desc">Better range through walls. Ideal for whole-home coverage.</div>
+          <div class="radio-desc"><%:Better range through walls. Ideal for whole-home coverage.%></div>
         </div>
         <div class="radio-card" onclick="pickRadio(this,'radio1')">
           <input type="radio" name="radio" value="radio1">
-          <div class="radio-name">5 GHz</div>
+          <div class="radio-name"><%:5 GHz%></div>
           <div class="radio-freq">radio1</div>
-          <div class="radio-desc">Faster speeds, shorter range. Good for nearby devices.</div>
+          <div class="radio-desc"><%:Faster speeds, shorter range. Good for nearby devices.%></div>
         </div>
 		<div class="radio-card" onclick="pickRadio(this,'radio2')">
 			<input type="radio" name="radio" value="radio2">
-			<div class="radio-name">6 GHz</div>
+			<div class="radio-name"><%:6 GHz%></div>
 			<div class="radio-freq">radio2</div>
-			<div class="radio-desc">Ultra-fast Wi-Fi 6E/7. Requires WPA3 support.</div>
+			<div class="radio-desc"><%:Ultra-fast Wi-Fi 6E/7. Requires WPA3 support.%></div>
 		</div>
   <div class="radio-card" onclick="pickRadio(this,'both')">
           <input type="radio" name="radio" value="both">
-          <div class="radio-name">All Bands</div>
+          <div class="radio-name"><%:All Bands%></div>
           <div class="radio-freq">Sync All</div>
-          <div class="radio-desc">Unified SSID across all available radios.</div>
+          <div class="radio-desc"><%:Unified SSID across all available radios.%></div>
         </div>
       </div>
       <hr class="divider">
       <div class="inline-toggle" style="margin-bottom:.85rem">
         <div class="tinfo">
-          <strong>Isolate clients from each other</strong>
-          <span>Prevents devices on this network from talking to each other</span>
+          <strong><%:Isolate clients from each other%></strong>
+          <span><%:Prevents devices on this network from talking to each other%></span>
         </div>
         <div class="mini-switch on" id="sw-isolate" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
       <div class="inline-toggle">
         <div class="tinfo">
-          <strong>Block access to home LAN</strong>
-          <span>Kids&apos; devices cannot reach printers, NAS, or home devices &mdash; internet only</span>
+          <strong><%:Block access to home LAN%></strong>
+          <span><%:Kids' devices cannot reach printers, NAS, or home devices — internet only%></span>
         </div>
         <div class="mini-switch on" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
@@ -306,78 +306,78 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('dns')">
       <span class="panel-icon">&#128737;&#65039;</span>
-      <span class="panel-title">DNS &amp; Content Filtering</span>
-      <span class="panel-subtitle">DHCP Option 6 &mdash; zero overhead</span>
+      <span class="panel-title"><%:DNS &amp; Content Filtering%></span>
+      <span class="panel-subtitle"><%:DHCP Option 6 — zero overhead%></span>
       <span class="panel-chevron open" id="chevron-dns">&#9660;</span>
     </div>
     <div class="panel-body" id="body-dns">
       <p style="font-size:.82rem;color:var(--muted2);margin-bottom:1rem">
-        DNS is pushed to devices via <strong style="color:var(--accent)">DHCP Option 6</strong>.
-        The router does zero content inspection &mdash; all filtering happens at the DNS provider.
-        A firewall rule prevents any device from bypassing it.
+        <%:DNS is pushed to devices via%> <strong style="color:var(--accent)">DHCP Option 6</strong>.
+        <%:The router does zero content inspection — all filtering happens at the DNS provider.%>
+        <%:A firewall rule prevents any device from bypassing it.%>
       </p>
       <div class="dns-options">
         <div class="dns-opt selected" onclick="pickDNS(this,'1.1.1.3')">
           <input type="radio" name="dns" value="1.1.1.3" checked>
-          <div class="dns-badge badge-family">Family Safe</div>
-          <div class="dns-opt-name">Cloudflare Family</div>
+          <div class="dns-badge badge-family"><%:Family Safe%></div>
+          <div class="dns-opt-name"><%:Cloudflare Family%></div>
           <div class="dns-opt-ip">1.1.1.3 / 1.0.0.3</div>
-          <div class="dns-opt-desc">Blocks malware + adult content. No account. Fast global network.</div>
+          <div class="dns-opt-desc"><%:Blocks malware + adult content. No account. Fast global network.%></div>
         </div>
         <div class="dns-opt" onclick="pickDNS(this,'185.228.168.9')">
           <input type="radio" name="dns" value="185.228.168.9">
-          <div class="dns-badge badge-strict">Strict</div>
-          <div class="dns-opt-name">CleanBrowsing</div>
+          <div class="dns-badge badge-strict"><%:Strict%></div>
+          <div class="dns-opt-name"><%:CleanBrowsing%></div>
           <div class="dns-opt-ip">185.228.168.9</div>
-          <div class="dns-opt-desc">Blocks adult content, proxies &amp; VPN bypass sites.</div>
+          <div class="dns-opt-desc"><%:Blocks adult content, proxies &amp; VPN bypass sites.%></div>
         </div>
         <div class="dns-opt" onclick="pickDNS(this,'208.67.222.123')">
           <input type="radio" name="dns" value="208.67.222.123">
-          <div class="dns-badge badge-family">Family Safe</div>
-          <div class="dns-opt-name">OpenDNS Family</div>
+          <div class="dns-badge badge-family"><%:Family Safe%></div>
+          <div class="dns-opt-name"><%:OpenDNS Family%></div>
           <div class="dns-opt-ip">208.67.222.123</div>
-          <div class="dns-opt-desc">Cisco-backed. Blocks adult content. No account needed.</div>
+          <div class="dns-opt-desc"><%:Cisco-backed. Blocks adult content. No account needed.%></div>
         </div>
         <div class="dns-opt" onclick="pickDNS(this,'9.9.9.11')">
           <input type="radio" name="dns" value="9.9.9.11">
-          <div class="dns-badge badge-malware">Malware Only</div>
-          <div class="dns-opt-name">Quad9 Secure</div>
+          <div class="dns-badge badge-malware"><%:Malware Only%></div>
+          <div class="dns-opt-name"><%:Quad9 Secure%></div>
           <div class="dns-opt-ip">9.9.9.11</div>
-          <div class="dns-opt-desc">Blocks malware/phishing only. No adult content filter. Non-profit.</div>
+          <div class="dns-opt-desc"><%:Blocks malware/phishing only. No adult content filter. Non-profit.%></div>
         </div>
         <div class="dns-opt" onclick="pickDNS(this,'94.140.14.15')">
           <input type="radio" name="dns" value="94.140.14.15">
-          <div class="dns-badge badge-family">Family Safe</div>
-          <div class="dns-opt-name">AdGuard Family</div>
+          <div class="dns-badge badge-family"><%:Family Safe%></div>
+          <div class="dns-opt-name"><%:AdGuard Family%></div>
           <div class="dns-opt-ip">94.140.14.15</div>
-          <div class="dns-opt-desc">Blocks ads, trackers &amp; adult content. European servers.</div>
+          <div class="dns-opt-desc"><%:Blocks ads, trackers &amp; adult content. European servers.%></div>
         </div>
         <div class="dns-opt" onclick="pickDNS(this,'custom')">
           <input type="radio" name="dns" value="custom">
-          <div class="dns-badge badge-custom">Custom</div>
-          <div class="dns-opt-name">Custom DNS</div>
+          <div class="dns-badge badge-custom"><%:Custom%></div>
+          <div class="dns-opt-name"><%:Custom DNS%></div>
           <div class="dns-opt-ip" id="custom-dns-preview">&mdash;</div>
-          <div class="dns-opt-desc">Enter any DNS resolver IP manually.</div>
+          <div class="dns-opt-desc"><%:Enter any DNS resolver IP manually.%></div>
         </div>
       </div>
       <div id="custom-dns-field" style="display:none;margin-top:.9rem">
         <div class="field">
-          <label>Custom DNS Server IP</label>
+          <label><%:Custom DNS Server IP%></label>
           <input type="text" id="custom-dns-ip" placeholder="e.g. 176.103.130.132" oninput="updateCustomPreview()">
         </div>
       </div>
       <hr class="divider">
       <div class="inline-toggle" style="margin-bottom:.85rem">
         <div class="tinfo">
-          <strong>Block DNS bypass (port 53 DNAT)</strong>
-          <span>Firewall redirects all outbound DNS back to the router &mdash; devices cannot use their own DNS</span>
+          <strong><%:Block DNS bypass (port 53 DNAT)%></strong>
+          <span><%:Firewall redirects all outbound DNS back to the router — devices cannot use their own DNS%></span>
         </div>
         <div class="mini-switch on" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
       <div class="inline-toggle">
         <div class="tinfo">
-          <strong>Block DNS-over-HTTPS (DoH) bypass</strong>
-          <span>Blocks known DoH providers so browsers can&apos;t silently bypass the DNS filter</span>
+          <strong><%:Block DNS-over-HTTPS (DoH) bypass%></strong>
+          <span><%:Blocks known DoH providers so browsers can't silently bypass the DNS filter%></span>
         </div>
         <div class="mini-switch on" id="BlockDoH" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
@@ -388,39 +388,39 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('schedule')">
       <span class="panel-icon">&#127769;</span>
-      <span class="panel-title">Bedtime Schedule</span>
-      <span class="panel-subtitle">Auto on/off by day &amp; hour</span>
+      <span class="panel-title"><%:Bedtime Schedule%></span>
+      <span class="panel-subtitle"><%:Auto on/off by day &amp; hour%></span>
       <span class="panel-chevron open" id="chevron-schedule">&#9660;</span>
     </div>
     <div class="panel-body" id="body-schedule">
       <div class="inline-toggle" style="margin-bottom:1.1rem">
         <div class="tinfo">
-          <strong>Enable automatic schedule</strong>
-          <span>Kids WiFi turns off outside the allowed hours shown below</span>
+          <strong><%:Enable automatic schedule%></strong>
+          <span><%:Kids WiFi turns off outside the allowed hours shown below%></span>
         </div>
         <div class="mini-switch on" onclick="toggleSchedulePanel(this)"></div>
       </div>
       <div id="schedule-config">
         <div class="schedule-grid" id="schedule-grid"></div>
         <div class="schedule-legend">
-          <span><span class="legend-dot allowed"></span>WiFi ON</span>
-          <span><span class="legend-dot blocked"></span>WiFi OFF (bedtime)</span>
-          <span style="color:var(--muted);font-size:.7rem">Click or drag cells to toggle</span>
+          <span><span class="legend-dot allowed"></span><%:WiFi ON%></span>
+          <span><span class="legend-dot blocked"></span><%:WiFi OFF (bedtime)%></span>
+          <span style="color:var(--muted);font-size:.7rem"><%:Click or drag cells to toggle%></span>
         </div>
         <hr class="divider">
         <div class="grid-2" style="margin-top:.5rem">
           <div class="field">
-            <label>Quick Preset</label>
+            <label><%:Quick Preset%></label>
             <select id="schedule-preset" onchange="applyPreset(this.value)">
-              <option value="">&#8212; Choose a preset &#8212;</option>
-              <option value="school">School days (8pm school nights / 9pm weekends)</option>
-              <option value="strict">Strict (9am&ndash;8pm every day)</option>
-              <option value="weekend">Weekends only (Fri 4pm &ndash; Sun 10pm)</option>
-              <option value="allday">Always on (remove restrictions)</option>
+              <option value=""><%:— Choose a preset —%></option>
+              <option value="school"><%:School days (8pm school nights / 9pm weekends)%></option>
+              <option value="strict"><%:Strict (9am–8pm every day)%></option>
+              <option value="weekend"><%:Weekends only (Fri 4pm – Sun 10pm)%></option>
+              <option value="allday"><%:Always on (remove restrictions)%></option>
             </select>
           </div>
           <div class="field">
-            <label>Timezone</label>
+            <label><%:Timezone%></label>
             <select id="timezone">
               <option>Europe/London</option>
               <option>Europe/Berlin</option>
@@ -438,14 +438,14 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('devices')">
       <span class="panel-icon">&#128241;</span>
-      <span class="panel-title">Connected Devices</span>
+      <span class="panel-title"><%:Connected Devices%></span>
       <span class="panel-subtitle" id="devices-count">3 online</span>
       <span class="panel-chevron open" id="chevron-devices">&#9660;</span>
     </div>
     <div class="panel-body" id="body-devices">
       <div class="device-list" id="device-list"></div>
       <p class="hint" style="margin-top:.75rem">
-        Blocking a device adds its MAC address to a deny list on this network only. It will not affect the device on other networks.
+        <%:Blocking a device adds its MAC address to a deny list on this network only. It will not affect the device on other networks.%>
       </p>
     </div>
   </div>
@@ -454,15 +454,15 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('gpio')">
       <span class="panel-icon">&#128280;</span>
-      <span class="panel-title">Hardware Kill-Switch</span>
-      <span class="panel-subtitle">GPIO / physical button toggle</span>
+      <span class="panel-title"><%:Hardware Kill-Switch%></span>
+      <span class="panel-subtitle"><%:GPIO / physical button toggle%></span>
       <span class="panel-chevron" id="chevron-gpio">&#9660;</span>
     </div>
     <div class="panel-body hidden" id="body-gpio">
       <div class="inline-toggle" style="margin-bottom:1.1rem">
         <div class="tinfo">
-          <strong>Enable hardware button</strong>
-          <span>Assigns a physical router button to instantly toggle Kids WiFi on/off</span>
+          <strong><%:Enable hardware button%></strong>
+          <span><%:Assigns a physical router button to instantly toggle Kids WiFi on/off%></span>
         </div>
         <div class="mini-switch" id="sw-gpio" onclick="toggleGPIOPanel(this)"></div>
       </div>
@@ -470,57 +470,57 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
         <div class="gpio-row">
           <div class="gpio-icon">&#128308;</div>
           <div class="gpio-info">
-            <strong>GPIO Pin / Button ID</strong>
-            <p>Common values: <code style="color:var(--accent)">0</code> = WPS button, <code style="color:var(--accent)">11</code> = Reset. Check your router&apos;s page on the OpenWrt Hardware wiki.</p>
+            <strong><%:GPIO Pin / Button ID%></strong>
+            <p><%:Common values: 0 = WPS button, 11 = Reset. Check your router's page on the OpenWrt Hardware wiki.%></p>
           </div>
           <input type="number" class="gpio-pin-input" id="gpio-pin" value="0" min="0" max="255" oninput="markUnsaved()">
         </div>
         <hr class="divider">
         <div class="inline-toggle" style="margin-bottom:.85rem">
           <div class="tinfo">
-            <strong>LED feedback on toggle</strong>
-            <span>Blink the router&apos;s status LED when Kids WiFi is switched</span>
+            <strong><%:LED feedback on toggle%></strong>
+            <span><%:Blink the router's status LED when Kids WiFi is switched%></span>
           </div>
           <div class="mini-switch" onclick="this.classList.toggle('on');markUnsaved()"></div>
         </div>
         <div class="inline-toggle">
           <div class="tinfo">
-            <strong>Long-press only (3 seconds)</strong>
-            <span>Prevents accidental toggling &mdash; must hold button for 3 seconds</span>
+            <strong><%:Long-press only (3 seconds)%></strong>
+            <span><%:Prevents accidental toggling — must hold button for 3 seconds%></span>
           </div>
           <div class="mini-switch on" onclick="this.classList.toggle('on');markUnsaved()"></div>
         </div>
         <p class="hint" style="margin-top:.85rem">
-          The plugin writes a hotplug script to
+          <%:The plugin writes a hotplug script to%>
           <code style="color:var(--accent);font-family:var(--mono)">/etc/hotplug.d/button/30-kids-wifi</code>.
-          Each press toggles <code style="color:var(--accent);font-family:var(--mono)">wireless.kids_wifi.disabled</code> and runs <code style="color:var(--accent);font-family:var(--mono)">wifi reload</code> &mdash; no reboot required.
+          <%:Each press toggles%> <code style="color:var(--accent);font-family:var(--mono)">wireless.kids_wifi.disabled</code> <%:and runs%> <code style="color:var(--accent);font-family:var(--mono)">wifi reload</code> — <%:no reboot required.%>
         </p>
       </div>
       <hr class="divider">
-      <div class="field-label" style="margin-bottom:.75rem">Built-in Button Assignments</div>
+      <div class="field-label" style="margin-bottom:.75rem"><%:Built-in Button Assignments%></div>
       <p style="font-size:.78rem;color:var(--muted2);margin-bottom:.9rem">
-        Only enable buttons you want to use for Kids WiFi. Avoid enabling
-        <strong style="color:var(--orange)">Reset</strong> unless you are sure &mdash;
-        it may interfere with factory reset on some routers.
+        <%:Only enable buttons you want to use for Kids WiFi. Avoid enabling%>
+        <strong style="color:var(--orange)"><%:Reset%></strong> <%:unless you are sure —%>
+        <%:it may interfere with factory reset on some routers.%>
       </p>
       <div class="inline-toggle" style="margin-bottom:.85rem">
         <div class="tinfo">
-          <strong>BTN_0 &mdash; Hardware Slider</strong>
-          <span>GL.iNet and similar routers. Slide ON = WiFi on, slide OFF = WiFi off.</span>
+          <strong><%:BTN_0 — Hardware Slider%></strong>
+          <span><%:GL.iNet and similar routers. Slide ON = WiFi on, slide OFF = WiFi off.%></span>
         </div>
         <div class="mini-switch" id="sw-btn0" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
       <div class="inline-toggle" style="margin-bottom:.85rem">
         <div class="tinfo">
-          <strong>WPS Button</strong>
-          <span>Single press toggles Kids WiFi. Available on most consumer routers.</span>
+          <strong><%:WPS Button%></strong>
+          <span><%:Single press toggles Kids WiFi. Available on most consumer routers.%></span>
         </div>
         <div class="mini-switch" id="sw-btnwps" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
       <div class="inline-toggle">
         <div class="tinfo">
-          <strong style="color:var(--orange)">Reset Button &#9888;</strong>
-          <span>Single press toggles Kids WiFi. <strong style="color:var(--orange)">Will prevent factory reset while enabled.</strong> Use with caution.</span>
+          <strong style="color:var(--orange)"><%:Reset Button%> &#9888;</strong>
+          <span><%:Single press toggles Kids WiFi.%> <strong style="color:var(--orange)"><%:Will prevent factory reset while enabled.%></strong> <%:Use with caution.%></span>
         </div>
         <div class="mini-switch" id="sw-btnreset" onclick="this.classList.toggle('on');markUnsaved()"></div>
       </div>
@@ -531,49 +531,49 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('subnet')">
       <span class="panel-icon">&#127760;</span>
-      <span class="panel-title">Subnet &amp; Network</span>
-      <span class="panel-subtitle">IP range, DHCP, bandwidth</span>
+      <span class="panel-title"><%:Subnet &amp; Network%></span>
+      <span class="panel-subtitle"><%:IP range, DHCP, bandwidth%></span>
       <span class="panel-chevron" id="chevron-subnet">&#9660;</span>
     </div>
     <div class="panel-body hidden" id="body-subnet">
       <div class="grid-2">
         <div class="field">
-          <label>Kids Gateway IP</label>
+          <label><%:Kids Gateway IP%></label>
           <input type="text" id="net-gw" value="172.28.10.1" oninput="markUnsaved()">
-          <p class="hint">Router&apos;s IP on the kids subnet. Devices receive addresses in this range.</p>
+          <p class="hint"><%:Router's IP on the kids subnet. Devices receive addresses in this range.%></p>
         </div>
         <div class="field">
-          <label>Subnet Mask</label>
+          <label><%:Subnet Mask%></label>
           <input type="text" id="net-mask" value="255.255.255.0" oninput="markUnsaved()">
         </div>
         <div class="field">
-          <label>DHCP Range Start</label>
+          <label><%:DHCP Range Start%></label>
           <input type="number" id="dhcp-start" value="100" min="2" max="250" oninput="markUnsaved()">
         </div>
         <div class="field">
-          <label>DHCP Range Limit</label>
+          <label><%:DHCP Range Limit%></label>
           <input type="number" id="dhcp-limit" value="50" min="1" max="200" oninput="markUnsaved()">
         </div>
         <div class="field">
-          <label>Lease Time</label>
+          <label><%:Lease Time%></label>
           <select id="lease-time" onchange="markUnsaved()">
-            <option value="30m">30 minutes</option>
-            <option value="1h">1 hour</option>
-            <option value="4h" selected>4 hours</option>
-            <option value="12h">12 hours</option>
+            <option value="30m"><%:30 minutes%></option>
+            <option value="1h"><%:1 hour%></option>
+            <option value="4h" selected><%:4 hours%></option>
+            <option value="12h"><%:12 hours%></option>
           </select>
         </div>
         <div class="field">
-          <label>Max Bandwidth Per Device</label>
+          <label><%:Max Bandwidth Per Device%></label>
           <select id="bandwidth" onchange="markUnsaved()">
-            <option value="">Unlimited</option>
-            <option value="5">5 Mbit/s</option>
-            <option value="10">10 Mbit/s</option>
-            <option value="20">20 Mbit/s</option>
-            <option value="50">50 Mbit/s</option>
-			<option value="100" selected>100 Mbit/s</option>
+            <option value=""><%:Unlimited%></option>
+            <option value="5"><%:5 Mbit/s%></option>
+            <option value="10"><%:10 Mbit/s%></option>
+            <option value="20"><%:20 Mbit/s%></option>
+            <option value="50"><%:50 Mbit/s%></option>
+			<option value="100" selected><%:100 Mbit/s%></option>
           </select>
-          <p class="hint">Requires tc + iptables-mod-ipopt. Applied per device via tc qdisc.</p>
+          <p class="hint"><%:Requires tc + iptables-mod-ipopt. Applied per device via tc qdisc.%></p>
         </div>
       </div>
     </div>
@@ -583,8 +583,8 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
   <div class="panel">
     <div class="panel-header" onclick="togglePanel('log')">
       <span class="panel-icon">&#128203;</span>
-      <span class="panel-title">Activity Log</span>
-      <span class="panel-subtitle">Recent configuration events</span>
+      <span class="panel-title"><%:Activity Log%></span>
+      <span class="panel-subtitle"><%:Recent configuration events%></span>
       <span class="panel-chevron" id="chevron-log">&#9660;</span>
     </div>
     <div class="panel-body hidden" id="body-log">
@@ -596,24 +596,24 @@ hr.divider{border:none;border-top:1px solid var(--border);margin:1.1rem 0;}
         <div><span class="log-ts">20:58:11</span><span class="log-warn">Schedule: 1 minute until bedtime shutdown</span></div>
         <div><span class="log-ts">21:00:00</span><span class="log-warn">Schedule: Kids WiFi suspended (bedtime)</span></div>
       </div>
-      <button class="btn btn-ghost btn-sm" style="margin-top:.75rem" onclick="document.getElementById('log-box').innerHTML=''">Clear Log</button>
+      <button class="btn btn-ghost btn-sm" style="margin-top:.75rem" onclick="document.getElementById('log-box').innerHTML=''"><%:Clear Log%></button>
     </div>
   </div>
 
   <div class="btn-row">
-    <button class="btn btn-ghost btn-sm" onclick="grantExtension()" id="ext-btn">&#9201; Grant 1h Extension</button>
-    <button class="btn btn-success" onclick="saveAll()" id="save-btn">&#128190; Save &amp; Apply All</button>
-    <button class="btn btn-ghost" onclick="location.reload()">&#8617; Revert</button>
+    <button class="btn btn-ghost btn-sm" onclick="grantExtension()" id="ext-btn">&#9201; Grant 1h Extension#9201; <%:Grant 1h Extension%></button>
+    <button class="btn btn-success" onclick="saveAll()" id="save-btn">&#128190; Save &amp; Apply All#128190; <%:Save &amp; Apply All%></button>
+    <button class="btn btn-ghost" onclick="location.reload()">&#8617; Revert#8617; <%:Revert%></button>
     <button class="btn btn-danger btn-sm" style="margin-left:auto"
       onclick="removeKidsNetwork()">
-      &#128465; Remove Kids Network
+      &#128465; Remove Kids Network#128465; <%:Remove Kids Network%>
     </button>
   </div>
 </div>
 
 <div class="toast" id="toast">
   <span id="toast-icon">&#10004;</span>
-  <span id="toast-msg">Configuration saved.</span>
+  <span id="toast-msg"><%:Configuration saved.%></span>
 </div>
 
 <script>
