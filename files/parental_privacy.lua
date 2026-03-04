@@ -289,7 +289,6 @@ function action_apply()
         uci:commit("parental_privacy")
         sys.call("/etc/init.d/firewall reload")
         sys.call("/etc/init.d/dnsmasq reload")
-        luci.sys.call("ubus call network.interface.kids " .. (state == "0" and "up" or "down"))
         sys.call("/etc/init.d/parental-privacy restart")
     end)
 
