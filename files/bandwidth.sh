@@ -1,6 +1,6 @@
 #!/bin/sh
 
-IFACE="br-kids" # Ensure this matches your kids network interface name
+IFACE="br-lan.10" # Ensure this matches your kids network interface name
 
 clean_up() {
     tc qdisc del dev "$IFACE" root 2>/dev/null
@@ -28,4 +28,5 @@ if [ "$1" = "off" ] || [ -z "$1" ]; then
     logger -t parental-privacy "Bandwidth limits removed from $IFACE"
 else
     apply_limit "$1"
+
 fi
