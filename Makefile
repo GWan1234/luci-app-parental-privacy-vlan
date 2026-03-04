@@ -12,7 +12,7 @@ define Package/luci-app-parental-privacy-vlan
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=Parental Privacy Wizard
-  DEPENDS:=+luci-base +tc-full +kmod-sched-core +nftables
+  DEPENDS:=+luci-base +tc-full +kmod-sched-core +nftables @(TARGET_x86||TARGET_ath79||TARGET_ramips||TARGET_mediatek)
   PKGARCH:=all
 endef
 
@@ -45,3 +45,4 @@ endef
 
 
 $(eval $(call BuildPackage,luci-app-parental-privacy-vlan))
+
