@@ -443,10 +443,6 @@
 
 <!-- PANEL: Subnet & Network -->
 <div class="cbi-section">
-  <h3 class="cbi-section-title">
-    <%:Subnet &amp; Network%>
-    <span class="cbi-section-descr"><%:IP range, DHCP, bandwidth%></span>
-  </h3>
   <div class="cbi-section-node">
     <div class="row">
       <div class="col-sm-6">
@@ -492,22 +488,6 @@
               <option value="4h" selected><%:4 hours%></option>
               <option value="12h"><%:12 hours%></option>
             </select>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6">
-        <div class="cbi-value">
-          <label class="cbi-value-title"><%:Max Bandwidth Per Device%></label>
-          <div class="cbi-value-field">
-            <select class="cbi-input-select" id="bandwidth" onchange="markUnsaved()">
-              <option value=""><%:Unlimited%></option>
-              <option value="5"><%:5 Mbit/s%></option>
-              <option value="10"><%:10 Mbit/s%></option>
-              <option value="20"><%:20 Mbit/s%></option>
-              <option value="50"><%:50 Mbit/s%></option>
-              <option value="100" selected><%:100 Mbit/s%></option>
-            </select>
-            <div class="cbi-value-description"><%:Requires tc + iptables-mod-ipopt. Applied per device via tc qdisc.%></div>
           </div>
         </div>
       </div>
@@ -815,7 +795,6 @@ async function saveAll() {
     isolate:       document.getElementById('sw-isolate').classList.contains('on'),
     dns:           selectedDNS === 'custom' ? document.getElementById('custom-dns-ip').value : selectedDNS,
     doh:           document.getElementById('BlockDoH').classList.contains('on'),
-    bandwidth:     document.getElementById('bandwidth').value,
     schedule_data: schedule,
     button_config: {
       btn0:  document.getElementById('sw-btn0').classList.contains('on'),

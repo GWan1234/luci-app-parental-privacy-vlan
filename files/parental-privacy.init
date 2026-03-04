@@ -1,0 +1,40 @@
+#!/bin/sh /etc/rc.common
+
+# START=95: run after firewall (START=20) and network (START=20) are up.
+# STOP=89:  tear down before firewall and network go down on shutdown,
+#           ensuring our nftables/tc rules are removed cleanly while the
+#           interfaces they reference still exist.
+START=95
+STOP=89
+
+# Expose 'reload' as a supported extra command so that
+# `/etc/init.d/parental-privacy reload` works via the standard init.d
+# interface, and so LuCI can call it after a firewall restart.
+EXTRA_COMMANDS="reload"
+EXTRA_HELP="        reload  Re-apply all parental-privacy rules (DoH, bandwidth, SafeSearch)"
+
+start() {
+    local ss
+    ss=$(uci -q get parental_privacy.default.safesearch)
+    [ "${ss:-1}" = "1" ] && /usr/share/parental-privacy/safesearch.sh enable
+
+    local doh
+    doh=$(uci -q get parental_privacy.default.doh_block)
+    [ "${doh:-1}" = "1" ] && /usr/share/parental-privacy/block-doh.sh enable
+
+}
+
+stop() {
+    # Remove DoH blocking rules before the firewall/network interfaces go away.
+    /usr/share/parental-privacy/block-doh.sh disable
+
+    # Remove SafeSearch dnsmasq config and reload dnsmasq.
+    /usr/share/parental-privacy/safesearch.sh disable
+}
+
+reload() {
+    # Re-apply all rules without a full stop/start cycle.
+    # Called after a firewall restart (which flushes our nftables rules)
+    # or when UCI config changes.
+    start
+}

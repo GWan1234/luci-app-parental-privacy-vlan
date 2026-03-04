@@ -48,8 +48,6 @@ fi
 # ── DoH rules — clean up any nftables/iptables rules ─────────────────────────
 /usr/share/parental-privacy/block-doh.sh disable 2>/dev/null
 
-# ── Bandwidth shaping — remove tc rules ──────────────────────────────────────
-/usr/share/parental-privacy/bandwidth.sh off 2>/dev/null
 
 # ── Commit all changes ────────────────────────────────────────────────────────
 uci commit wireless

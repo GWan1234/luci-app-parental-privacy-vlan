@@ -39,7 +39,9 @@ function action_status()
         for line in f:lines() do
             local exp, mac, ip, name = line:match("(%S+)%s+(%S+)%s+(%S+)%s+(%S+)")
             -- Detect devices on the 172.28.10.x subnet
-            if ip and ip:match("^172%.28%.10%.") then
+			local vlan_id = uci:get("parental_privacy", "default", "vlan_id") or "10"
+			local kids_subnet = "^172%.28%." .. vlan_id .. "%."
+            if ip and ip:match(kids_subnet) then
                 table.insert(leases, {mac=mac, ip=ip, name=(name~="*" and name or "Unknown")})
             end
         end
@@ -260,23 +262,20 @@ function action_apply()
                 uci:set("parental_privacy", "default", "button_reset", data.button_config.reset and "1" or "0")
             end
 
-            -- Bandwidth Limiting
-            if data.bandwidth then
-                sys.call("/usr/share/parental-privacy/bandwidth.sh " .. data.bandwidth)
-            end
-
             -- DNS & DoH Blocking
             if data.dns then uci:set("dhcp", "kids", "dhcp_option", {"6," .. data.dns}) end
             if data.doh ~= nil then
                 local doh_state = data.doh and "enable" or "disable"
                 sys.call("/usr/share/parental-privacy/block-doh.sh " .. doh_state)
+				uci:set("parental_privacy", "default", "doh_block", data.doh and "1" or "0")
             end
 
             -- SafeSearch (Google, Bing, YouTube restricted mode)
-            if data.safesearch ~= nil then
-                local ss_state = data.safesearch and "enable" or "disable"
-                sys.call("/usr/share/parental-privacy/safesearch.sh " .. ss_state)
-            end
+			if data.safesearch ~= nil then
+				local ss_state = data.safesearch and "enable" or "disable"
+				sys.call("/usr/share/parental-privacy/safesearch.sh " .. ss_state)
+				uci:set("parental_privacy", "default", "safesearch", data.safesearch and "1" or "0")
+			end
 
             -- Safe Cron Management
             if data.schedule_data then

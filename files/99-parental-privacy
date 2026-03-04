@@ -258,8 +258,12 @@ uci commit firewall
 uci commit wireless
 
 /etc/init.d/network restart
+sleep 3
 /etc/init.d/dnsmasq restart
+sleep 1
 /etc/init.d/firewall restart
+sleep 1
+wifi reload
 /etc/init.d/parental-privacy start
 
 logger -t parental-privacy "VLAN edition setup complete. Service parental-privacy is now active."

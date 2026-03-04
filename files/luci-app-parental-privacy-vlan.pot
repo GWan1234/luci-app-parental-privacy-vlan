@@ -414,7 +414,7 @@ msgid "Subnet &amp; Network"
 msgstr ""
 
 #: kids_network.htm:535
-msgid "IP range, DHCP, bandwidth"
+msgid "IP range, DHCP"
 msgstr ""
 
 #: kids_network.htm:541
@@ -455,38 +455,6 @@ msgstr ""
 
 #: kids_network.htm:563
 msgid "12 hours"
-msgstr ""
-
-#: kids_network.htm:567
-msgid "Max Bandwidth Per Device"
-msgstr ""
-
-#: kids_network.htm:569
-msgid "Unlimited"
-msgstr ""
-
-#: kids_network.htm:570
-msgid "5 Mbit/s"
-msgstr ""
-
-#: kids_network.htm:571
-msgid "10 Mbit/s"
-msgstr ""
-
-#: kids_network.htm:572
-msgid "20 Mbit/s"
-msgstr ""
-
-#: kids_network.htm:573
-msgid "50 Mbit/s"
-msgstr ""
-
-#: kids_network.htm:574
-msgid "100 Mbit/s"
-msgstr ""
-
-#: kids_network.htm:576
-msgid "Requires tc + iptables-mod-ipopt. Applied per device via tc qdisc."
 msgstr ""
 
 #: kids_network.htm:586
