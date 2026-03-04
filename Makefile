@@ -22,8 +22,13 @@ define Package/luci-app-parental-privacy-vlan
   PKGARCH:=all
 endef
 
+TITLE:=Parental Privacy Wizard (VLAN edition)
+
 define Package/luci-app-parental-privacy-vlan/description
-  A private, isolated Kids WiFi network with hardware toggle and DNS hijacking.
+  Isolated Kids WiFi with DNS filtering, schedules, and bandwidth limiting.
+  VLAN edition — requires DSA hardware (OpenWrt 21.02+) and mac80211 WiFi
+  driver (ath9k/ath10k/ath11k/mt76). Provides single-NAT isolation suitable
+  for games consoles. For older hardware use luci-app-parental-privacy instead.
 endef
 
 define Build/Compile
@@ -51,5 +56,6 @@ endef
 
 
 $(eval $(call BuildPackage,luci-app-parental-privacy-vlan))
+
 
 
