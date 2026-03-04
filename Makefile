@@ -4,7 +4,6 @@ PKG_NAME:=luci-app-parental-privacy-vlan
 PKG_VERSION:=1.0.0
 PKG_RELEASE:=1
 PKG_SOURCE_VERSION:=main
-PKG_MAINTAINER:=Edward Watts
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/eddwatts/luci-app-parental-privacy-vlan.git
 PKG_MIRROR_HASH:=skip
@@ -18,7 +17,7 @@ define Package/luci-app-parental-privacy-vlan
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=Parental Privacy Wizard (VLAN edition)
-  DEPENDS:=+luci-base +tc-full +kmod-sched-core +nftables @(TARGET_x86||TARGET_ath79||TARGET_ramips||TARGET_mediatek)
+  DEPENDS:=+luci-base +tc-full +kmod-sched-core +nftables
   PKGARCH:=all
 endef
 
@@ -55,6 +54,7 @@ endef
 
 
 $(eval $(call BuildPackage,luci-app-parental-privacy-vlan))
+
 
 
 
