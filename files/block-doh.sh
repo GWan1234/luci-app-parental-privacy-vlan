@@ -9,7 +9,8 @@
 #   block-doh.sh enable   — install blocking rules
 #   block-doh.sh disable  — remove blocking rules
 
-IFACE="br-lan.10"
+_vlan=$(uci -q get parental_privacy.default.vlan_id)
+IFACE="br-lan.${_vlan:-10}"
 
 # ── IPv4 DoH provider IPs ─────────────────────────────────────────────────────
 DOH_IPS4="
