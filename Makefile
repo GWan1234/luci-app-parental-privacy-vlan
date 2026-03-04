@@ -33,6 +33,7 @@ define Package/luci-app-parental-privacy-vlan/install
 
 	$(INSTALL_BIN) ./files/bandwidth.sh $(1)/usr/share/parental-privacy/
 	$(INSTALL_BIN) ./files/block-doh.sh $(1)/usr/share/parental-privacy/
+	$(INSTALL_BIN) ./files/safesearch.sh $(1)/usr/share/parental-privacy/
 	$(INSTALL_BIN) ./files/99-parental-privacy $(1)/etc/uci-defaults/
 	$(INSTALL_BIN) ./files/30-kids-wifi $(1)/etc/hotplug.d/button/
 
@@ -41,5 +42,6 @@ define Package/luci-app-parental-privacy-vlan/install
 	$(INSTALL_DATA) ./files/wizard.htm $(1)/usr/lib/lua/luci/view/parental_privacy/
 	$(INSTALL_DATA) ./files/luci-app-parental-privacy-vlan.json $(1)/usr/share/rpcd/acl.d/
 endef
+
 
 $(eval $(call BuildPackage,luci-app-parental-privacy-vlan))
