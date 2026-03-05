@@ -18,7 +18,7 @@ define Package/luci-app-parental-privacy-vlan
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=Parental Privacy Wizard (VLAN edition)
-  DEPENDS:=+luci-base +nftables +rpcd +udp-broadcast-relay-redux +umdns
+  DEPENDS:=+luci-base +nftables +rpcd +rpcd-mod-rpcsys +udp-broadcast-relay-redux +umdns
   PKGARCH:=all
 endef
 
@@ -140,16 +140,14 @@ endef
 
 define Package/luci-app-parental-privacy-vlan/install
 	# ── Directories ───────────────────────────────────────────────────────────
-	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DIR) $(1)/usr/share/luci/views/parental_privacy
+	$(INSTALL_DIR) $(1)/usr/share/luci/menu.d
 	$(INSTALL_DIR) $(1)/usr/share/parental-privacy
 	$(INSTALL_DIR) $(1)/usr/share/rpcd/acl.d
 	$(INSTALL_DIR) $(1)/usr/libexec/rpcd
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/button
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
-	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 
 	# ── Init script ───────────────────────────────────────────────────────────
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/parental-privacy.init \
@@ -191,21 +189,18 @@ define Package/luci-app-parental-privacy-vlan/install
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wizard.js \
 		$(1)/usr/share/luci/views/parental_privacy/
 
-	# ── Lua controller (legacy LuCI compatibility) ────────────────────────────
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/parental_privacy.lua \
-		$(1)/usr/lib/lua/luci/controller/
-
 	# ── LuCI menu descriptors ─────────────────────────────────────────────────
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/luci-app-parental-privacy-vlan.json \
-		$(1)/usr/share/rpcd/acl.d/
+		$(1)/usr/share/luci/menu.d/
 	# ── ACL ───────────────────────────────────────────────────────────────────
-	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/luci-app-parental-privacy.json \
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/luci-app-parental-privacy-vlan.json \
 		$(1)/usr/share/rpcd/acl.d/
 
 	# ── Translations ──────────────────────────────────────────────────────────
 	$(if $(wildcard $(PKG_BUILD_DIR)/po/*.lmo), \
+		$(INSTALL_DIR) $(1)/usr/share/luci/i18n; \
 		$(INSTALL_DATA) $(PKG_BUILD_DIR)/po/*.lmo \
-			$(1)/usr/lib/lua/luci/i18n/, \
+			$(1)/usr/share/luci/i18n/, \
 	)
 endef
 
