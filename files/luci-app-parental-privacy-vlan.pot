@@ -4,7 +4,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: luci-app-parental-privacy-vlan 1.0.0\n"
+"Project-Id-Version: luci-app-parental-privacy-vlan 1.2.0\n"
 "POT-Creation-Date: 2026-03-05 09:54+0000
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
@@ -348,6 +348,22 @@ msgstr ""
 
 #: dashboard.js:956
 msgid "Grant 1-hour extension"
+msgstr ""
+
+#: dashboard.js:1004
+msgid "Cross-Network Discovery"
+msgstr ""
+
+#: dashboard.js:1005
+msgid "mDNS, SSDP, Steam, Minecraft, printing"
+msgstr ""
+
+#: dashboard.js:1010
+msgid "Enable broadcast relay"
+msgstr ""
+
+#: dashboard.js:1011
+msgid "Allows kids-network devices to discover and use services on your main network — printers, Chromecast, AirPlay, game servers (Steam, Minecraft) and more. Requires udp-broadcast-relay-redux to be installed."
 msgstr ""
 
 #: dashboard.js:963

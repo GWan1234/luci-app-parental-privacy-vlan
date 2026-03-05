@@ -381,11 +381,15 @@ async function updateStatus() {
                 ? _('Kids WiFi Active') : _('Kids WiFi Off');
         }
 
-        // Sync safesearch + doh toggles
+        // Sync safesearch, doh + relay toggles
         const ss = $('sw-safesearch');
         if (ss) ss.classList.toggle('on', !!data.safesearch);
         const doh = $('BlockDoH');
         if (doh) doh.classList.toggle('on', !!data.doh_block);
+        const relay = $('sw-relay');
+        if (relay) relay.classList.toggle('on', !!data.broadcast_relay);
+        const isolate = $('sw-isolate');
+        if (isolate) isolate.classList.toggle('on', !!data.isolate);
 
         // Load schedule from status (convert range arrays to our format)
         let hasSchedule = false;
@@ -558,6 +562,7 @@ async function saveAll() {
                            : selectedDNS,
         doh:           $('BlockDoH').classList.contains('on'),
         safesearch:    $('sw-safesearch').classList.contains('on'),
+        broadcast_relay: $('sw-relay').classList.contains('on'),
         schedule:      schedule,
         button_config: {
             btn0:      $('sw-btn0').classList.contains('on'),
@@ -718,8 +723,10 @@ return view.extend({
         const active   = status && status.active;
         const ssid     = (status && status.ssid)     || '';
         const passwd   = (status && status.wifi_password) || '';
-        const ss       = status  ? status.safesearch  : true;
-        const doh      = status  ? status.doh_block   : true;
+        const ss       = status  ? status.safesearch    : true;
+        const doh      = status  ? status.doh_block     : true;
+        const relayOn  = status  ? status.broadcast_relay : true;
+        const isolateOn = status  ? status.isolate          : false;
 
         // ── HTML ──────────────────────────────────────────────────────────────
         const html = `
@@ -826,7 +833,7 @@ ${css}
         <strong>${_('Isolate clients from each other')}</strong>
         <small>${_('Prevents devices on this network from talking to each other')}</small>
       </div>
-      <div class="kn-switch on" id="sw-isolate" onclick="this.classList.toggle('on');markUnsaved()"></div>
+      <div class="kn-switch ${isolateOn ? 'on' : ''}" id="sw-isolate" onclick="this.classList.toggle('on');markUnsaved()"></div>
     </div>
   </div>
 </div>
@@ -991,6 +998,22 @@ ${css}
         <small>${_('GPIO pin number for a hardware slider (leave blank to disable)')}</small>
       </div>
       <input type="text" class="cbi-input-text" id="gpio-pin-input" placeholder="e.g. 4" style="max-width:80px" oninput="markUnsaved()">
+    </div>
+  </div>
+</div>
+
+<!-- Cross-Network Discovery (Broadcast Relay) -->
+<div class="cbi-section">
+  <h3 class="cbi-section-title">${_('Cross-Network Discovery')}
+    <span class="cbi-section-descr">${_('mDNS, SSDP, Steam, Minecraft, printing')}</span>
+  </h3>
+  <div class="cbi-section-node">
+    <div class="kn-toggle-row">
+      <div class="kn-tinfo">
+        <strong>${_('Enable broadcast relay')}</strong>
+        <small>${_('Allows kids-network devices to discover and use services on your main network — printers, Chromecast, AirPlay, game servers (Steam, Minecraft) and more. Requires udp-broadcast-relay-redux to be installed.')}</small>
+      </div>
+      <div class="kn-switch ${relayOn ? 'on' : ''}" id="sw-relay" onclick="this.classList.toggle('on');markUnsaved()"></div>
     </div>
   </div>
 </div>
