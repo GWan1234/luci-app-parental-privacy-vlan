@@ -134,7 +134,6 @@ The three-step wizard walks through primary DNS selection, Kids WiFi credentials
 | Dependency | Purpose |
 |---|---|
 | `luci-base` | LuCI framework |
-| `kmod-sched-core` | Kernel traffic shaping module |
 | `nftables` | DoH blocking firewall rules (falls back to iptables) |
 | `udp-broadcast-relay-redux` | Relays UDP broadcast and multicast packets (mDNS, SSDP, Steam, Minecraft, WSD, NetBIOS) between the kids VLAN and the main LAN |
 | `umdns` | OpenWrt mDNS daemon; extended to serve both interfaces so AirPrint, AirPlay, and HomeKit resolve correctly across the VLAN boundary |
