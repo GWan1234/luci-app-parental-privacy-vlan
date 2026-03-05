@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=luci-app-parental-privacy-vlan
-PKG_VERSION:=1.1.0
+PKG_VERSION:=1.2.0
 PKG_RELEASE:=1
 PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=https://github.com/eddwatts/luci-app-parental-privacy-vlan.git
@@ -18,7 +18,7 @@ define Package/luci-app-parental-privacy-vlan
   CATEGORY:=LuCI
   SUBMENU:=3. Applications
   TITLE:=Parental Privacy Wizard (VLAN edition)
-  DEPENDS:=+luci-base +nftables +rpcd +rpcd-mod-file
+  DEPENDS:=+luci-base +nftables +rpcd +rpcd-mod-file +udp-broadcast-relay-redux +umdns
   PKGARCH:=all
 endef
 
@@ -27,6 +27,8 @@ define Package/luci-app-parental-privacy-vlan/description
   time-based scheduling. VLAN edition — requires DSA hardware (OpenWrt 22.03+)
   and mac80211 WiFi driver (ath9k/ath10k/ath11k/mt76).
   Provides single-NAT isolation suitable for games consoles.
+  Includes broadcast relay (mDNS, SSDP, WSD, Steam, Minecraft Bedrock/Java,
+  Windows printing) so kids-VLAN devices can discover and use LAN services.
 endef
 
 define Build/Compile
@@ -47,16 +49,21 @@ define Package/luci-app-parental-privacy-vlan/install
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/button
 	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/controller
 	$(INSTALL_DIR) $(1)/usr/lib/lua/luci/i18n
 
 	# ── Init script ───────────────────────────────────────────────────────────
-	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/parental-privacy \
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/parental-privacy.init \
 		$(1)/etc/init.d/parental-privacy
 
 	# ── Shell scripts ─────────────────────────────────────────────────────────
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/block-doh.sh \
 		$(1)/usr/share/parental-privacy/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/broadcast-relay.sh \
+		$(1)/usr/share/parental-privacy/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/safesearch.sh \
+		$(1)/usr/share/parental-privacy/
+	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/schedule-block.sh \
 		$(1)/usr/share/parental-privacy/
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/files/remove.sh \
 		$(1)/usr/share/parental-privacy/
@@ -84,6 +91,16 @@ define Package/luci-app-parental-privacy-vlan/install
 		$(1)/usr/share/luci/views/parental_privacy/
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/wizard.js \
 		$(1)/usr/share/luci/views/parental_privacy/
+
+	# ── Lua controller (legacy LuCI compatibility) ────────────────────────────
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/parental_privacy.lua \
+		$(1)/usr/lib/lua/luci/controller/
+
+	# ── LuCI menu descriptors ─────────────────────────────────────────────────
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/luci-app-parental-privacy.json \
+		$(1)/usr/share/luci/menu.d/
+	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/luci-app-parental-privacy-vlan.json \
+		$(1)/usr/share/luci/menu.d/
 
 	# ── ACL ───────────────────────────────────────────────────────────────────
 	$(INSTALL_DATA) $(PKG_BUILD_DIR)/files/luci-app-parental-privacy.json \
