@@ -105,14 +105,6 @@
     internet status, SSID/password, schedule, SafeSearch, DoH, and relay
     toggles. Extend and Remove buttons included.
 
-- **REQUIREMENTS**
-    OpenWrt 22.03 or later (fw4/nftables)
-    DSA network switch (swconfig hardware NOT supported)
-    mac80211 WiFi driver (ath9k, ath10k, ath11k, mt76)
-    Packages: luci-base, rpcd, rpcd-mod-file, nftables,
-              udp-broadcast-relay-redux, umdns
-
-
 ---
 
 ## Screenshots
@@ -142,9 +134,10 @@ The three-step wizard walks through primary DNS selection, Kids WiFi credentials
 | Dependency | Purpose |
 |---|---|
 | `luci-base` | LuCI framework |
-| `tc-full` | Bandwidth limiting via HTB qdisc |
 | `kmod-sched-core` | Kernel traffic shaping module |
 | `nftables` | DoH blocking firewall rules (falls back to iptables) |
+| `udp-broadcast-relay-redux` | Relays UDP broadcast and multicast packets (mDNS, SSDP, Steam, Minecraft, WSD, NetBIOS) between the kids VLAN and the main LAN |
+| `umdns` | OpenWrt mDNS daemon; extended to serve both interfaces so AirPrint, AirPlay, and HomeKit resolve correctly across the VLAN boundary |
 
 OpenWrt 22.03 or later recommended. Works on 21.02 with iptables fallback.
 
