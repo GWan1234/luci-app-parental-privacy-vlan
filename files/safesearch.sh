@@ -216,6 +216,17 @@ EOF
         done
         echo "" >> "$DNSMASQ_CONF"
     fi
+
+	# TikTok & Snapchat Domains
+	TIKTOK_DOMAINS="tiktok.com tiktokv.com musical.ly byteoversea.com tiktokcdn.com"
+	SNAPCHAT_DOMAINS="snapchat.com sc-static.net snapads.com"
+	BLOCK_UNDESIRABLE=$(uci -q get parental_privacy.default.undesirable)
+	if [ "$BLOCK_UNDESIRABLE" = "1" ]; then
+		echo "# Block Undesirable Apps" >> "$DNSMASQ_CONF"
+		for d in $TIKTOK_DOMAINS $SNAPCHAT_DOMAINS; do
+			echo "address=/${d}/" >> "$DNSMASQ_CONF"
+		done
+	fi
 }
 
 enable_safesearch() {

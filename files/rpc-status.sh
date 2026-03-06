@@ -12,7 +12,7 @@
 
 # ── UCI values ────────────────────────────────────────────────────────────────
 VLAN_ID=$(uci -q get parental_privacy.default.vlan_id)
-VLAN_ID=${VLAN_ID:-10}
+VLAN_ID=${VLAN_ID:-28}
 KIDS_SUBNET="172.28.${VLAN_ID}."
 
 # Find the true primary SSID by skipping guest/kids/disabled/non-AP VAPs.
@@ -85,6 +85,18 @@ RELAY=$(uci -q get parental_privacy.default.broadcast_relay)
 RELAY=${RELAY:-1}
 RELAY_BOOL="true"
 [ "$RELAY" = "0" ] && RELAY_BOOL="false"
+
+# --- VPN Block Status ---
+VPN_B=$(uci -q get parental_privacy.default.vpn_block)
+VPN_B=${VPN_B:-0} # Default to off
+VPN_BOOL="true"
+[ "$VPN_B" = "0" ] && VPN_BOOL="false"
+
+# --- Undesirable Apps Status ---
+UNDES=$(uci -q get parental_privacy.default.undesirable)
+UNDES=${UNDES:-0} # Default to off
+UNDES_BOOL="true"
+[ "$UNDES" = "0" ] && UNDES_BOOL="false"
 
 YOUTUBE_MODE=$(uci -q get parental_privacy.default.youtube_mode)
 YOUTUBE_MODE=${YOUTUBE_MODE:-moderate}
@@ -228,6 +240,8 @@ cat <<EOF
     "uptime": $UPTIME,
     "safesearch": $SS_BOOL,
     "doh_block": $DOH_BOOL,
+	"vpn_block": $VPN_BOOL,
+    "undesirable": $UNDES_BOOL,
     "broadcast_relay": $RELAY_BOOL,
     "youtube_mode": "$YOUTUBE_MODE",
     "block_search": $BLOCK_SEARCH_BOOL,

@@ -126,7 +126,9 @@ async function applyAll() {
             safesearch:   $('wiz_safesearch').checked,
             youtube_mode: $('wiz_ytmode') ? $('wiz_ytmode').value : 'moderate',
             block_search: $('wiz_blocksearch') ? $('wiz_blocksearch').checked : false,
-            doh:          $('wiz_doh').checked
+            doh:          $('wiz_doh').checked,
+			vpn_block:    $('wiz_vpn_block').checked,
+			undesirable:  $('wiz_undesirable').checked
         }
     ];
 
@@ -390,6 +392,23 @@ ${css}
           <small>${_('Prevents browsers silently bypassing the DNS filter using encrypted DNS. Recommended.')}</small>
         </div>
       </div>
+
+	  <div class="pp-toggle-row">
+	    <input type="checkbox" id="wiz_vpn_block" checked>
+		<div>
+		  <strong>${_('Block VPN & Bypass Tools')}</strong><br>
+		  <small>${_('Blocks common VPN ports (OpenVPN, WireGuard) to prevent kids from bypassing the DNS filters.')}</small>
+		</div>
+	  </div>
+
+	  <div class="pp-toggle-row">
+		<input type="checkbox" id="wiz_undesirable" checked>
+		<div>
+		  <strong>${_('Block Undesirable Apps')}</strong><br>
+		  <small>${_('Automatically blocks TikTok and Snapchat domains at the DNS level.')}</small>
+		</div>
+	  </div>
+
     </div>
 
     <div style="margin-top:16px; display:flex; gap:8px; justify-content:flex-end">

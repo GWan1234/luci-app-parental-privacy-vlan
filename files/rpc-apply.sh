@@ -218,6 +218,9 @@ write_cron_for_day() {
         echo "$em $utc_eh * * $utc_dow_e $disable_cmd  #kids_wifi" >> "$cron_file"
     done
 }
+# Define the kids interface (usually br-kids)
+KIDS_IFACE=$(uci -q get network.kids.device)
+KIDS_IFACE=${KIDS_IFACE:-br-kids}
 
 # ═════════════════════════════════════════════════════════════════════════════
 # STAGE: primary — DNS provider (wizard step 1)
@@ -346,8 +349,31 @@ if [ -n "$PASS" ]; then
     fi
 fi
 
-# ── Client isolation ──────────────────────────────────────────────────────────
+# ── VPN Blocking ─────────────────────────────────────────────────────────────
+VPN_BLK=$(json_bool '@.vpn_block')
+if [ -n "$VPN_BLK" ]; then
+    uci set parental_privacy.default.vpn_block="$VPN_BLK"
+    # Always clean up existing rules first to avoid duplicates
+    nft delete rule inet fw4 forward iifname "$KIDS_IFACE" udp dport @vpn_block_ports 2>/dev/null
+    nft delete rule inet fw4 forward iifname "$KIDS_IFACE" tcp dport @vpn_block_ports 2>/dev/null
 
+    if [ "$VPN_BLK" = "1" ]; then
+        # Create the set if it doesn't exist
+        nft add set inet fw4 vpn_block_ports { type inet_service\; flags interval\; } 2>/dev/null
+        nft flush set inet fw4 vpn_block_ports 2>/dev/null
+        nft add element inet fw4 vpn_block_ports { 1194, 51820, 500, 4500, 1080, 8080 } 2>/dev/null
+        
+        nft add rule inet fw4 forward iifname "$KIDS_IFACE" udp dport @vpn_block_ports reject
+        nft add rule inet fw4 forward iifname "$KIDS_IFACE" tcp dport @vpn_block_ports reject
+    fi
+fi
+
+# ── Undesirable Apps ─────────────────────────────────────────────────────────
+UNDESIRABLE=$(json_bool '@.undesirable')
+if [ -n "$UNDESIRABLE" ]; then
+    uci set parental_privacy.default.undesirable="$UNDESIRABLE"
+    # This will be picked up by safesearch.sh when called below
+fi
 # ── DNS ───────────────────────────────────────────────────────────────────────
 DNS=$(json_get '@.dns')
 [ -n "$DNS" ] && uci set dhcp.kids.dhcp_option="$(dns_option "$DNS")"

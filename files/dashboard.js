@@ -397,6 +397,10 @@ async function updateStatus() {
         if (bsSw) bsSw.classList.toggle('on', !!data.block_search);
         const doh = $('BlockDoH');
         if (doh) doh.classList.toggle('on', !!data.doh_block);
+        const vpnSw = $('sw-vpn-block');
+        if (vpnSw) vpnSw.classList.toggle('on', !!data.vpn_block);
+        const undSw = $('sw-undesirable');
+        if (undSw) undSw.classList.toggle('on', !!data.undesirable);
         const relay = $('sw-relay');
         if (relay) relay.classList.toggle('on', !!data.broadcast_relay);
 
@@ -578,6 +582,8 @@ async function saveAll() {
         safesearch:    $('sw-safesearch').classList.contains('on'),
         youtube_mode:  $('yt-mode-select') ? $('yt-mode-select').value : 'moderate',
         block_search:  $('sw-block-search') ? $('sw-block-search').classList.contains('on') : false,
+		vpn_block:   $('sw-vpn-block').classList.contains('on'),
+		undesirable: $('sw-undesirable').classList.contains('on'),
         broadcast_relay: $('sw-relay').classList.contains('on'),
         schedule:      schedule,
         button_config: {
@@ -741,6 +747,8 @@ return view.extend({
         const passwd   = (status && status.wifi_password) || '';
         const ss       = status  ? status.safesearch    : true;
         const doh      = status  ? status.doh_block     : true;
+        const vpnSw      = status  ? status.vpn_block     : true;
+        const undSw      = status  ? status.undesirable     : true;
         const relayOn  = status  ? status.broadcast_relay : true;
         const ytMode   = (status && status.youtube_mode) || 'moderate';
         const blkSrch  = status  ? status.block_search   : false;
@@ -944,6 +952,20 @@ ${css}
       </div>
       <div class="kn-switch ${blkSrch ? 'on' : ''}" id="sw-block-search" onclick="this.classList.toggle('on');markUnsaved()"></div>
     </div>
+	<div class="kn-toggle-row">
+	  <div class="kn-tinfo">
+		<strong>${_('Block VPN & Bypass Tools')}</strong>
+		<small>${_('Blocks common VPN ports (OpenVPN, WireGuard, IPSec) to prevent filter bypassing.')}</small>
+	  </div>
+	<div class="kn-switch ${status.vpn_block ? 'on' : ''}" id="sw-vpn-block" onclick="this.classList.toggle('on');markUnsaved()"></div>
+	</div>
+	<div class="kn-toggle-row">
+	  <div class="kn-tinfo">
+		<strong>${_('Block Undesirable Apps')}</strong>
+		<small>${_('Prevents access to TikTok and Snapchat domains.')}</small>
+	  </div>
+	<div class="kn-switch ${status.undesirable ? 'on' : ''}" id="sw-undesirable" onclick="this.classList.toggle('on');markUnsaved()"></div>
+	</div>
   </div>
 </div>
 

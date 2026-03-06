@@ -658,3 +658,15 @@ msgstr ""
 #: wizard.js:321
 msgid "Common values: 0 = WPS button, 11 = Reset. Check your router's hardware page on the OpenWrt wiki for the correct pin number."
 msgstr ""
+
+msgid "Block VPN & Bypass Tools"
+msgstr "Block VPN & Bypass Tools"
+
+msgid "Blocks common VPN ports (OpenVPN, WireGuard, IPSec) to prevent filter bypassing."
+msgstr "Blocks common VPN ports (OpenVPN, WireGuard, IPSec) to prevent filter bypassing."
+
+msgid "Block Undesirable Apps"
+msgstr "Block Undesirable Apps"
+
+msgid "Prevents access to TikTok and Snapchat domains."
+msgstr "Prevents access to TikTok and Snapchat domains."

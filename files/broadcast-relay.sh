@@ -31,7 +31,7 @@ LOG="parental-privacy"
 
 # ── Derive interfaces from UCI ────────────────────────────────────────────────
 VLAN_ID=$(uci -q get parental_privacy.default.vlan_id)
-VLAN_ID=${VLAN_ID:-10}
+VLAN_ID=${VLAN_ID:-28}
 
 # Derive the LAN bridge name from UCI rather than assuming br-lan.
 # network.lan.device holds the bridge device (e.g. br-lan, br-main, …).
