@@ -6,6 +6,8 @@
 #           interfaces they reference still exist.
 START=95
 STOP=89
+BACKUP_PATH="/etc/parental-privacy/blocklist.backup"
+LIVE_PATH="/tmp/dnsmasq.kids.d/master_blocklist.conf"
 
 # Expose 'reload' as a supported extra command so that
 # `/etc/init.d/parental-privacy reload` works via the standard init.d
@@ -21,6 +23,25 @@ start() {
     local doh
     doh=$(uci -q get parental_privacy.default.doh_block)
     [ "${doh:-1}" = "1" ] && /usr/share/parental-privacy/block-doh.sh enable
+
+	if [ -f "$BACKUP_PATH" ] && [ ! -f "$LIVE_PATH" ]; then
+        mkdir -p "/tmp/dnsmasq.kids.d"
+        cp "$BACKUP_PATH" "$LIVE_PATH"
+        logger -t "parental-privacy" "Restored DNS blocklist from flash backup."
+    fi
+
+	if [ -f "$BACKUP_LIST" ]; then
+        local last_mod=$(stat -c %Y "$BACKUP_LIST")
+        local now=$(date +%s)
+        if [ $((now - last_mod)) -gt 86400 ]; then
+            logger -t "parental-privacy" "Cache is old. Scheduling background update."
+            # Run in background with 'nice' to give it lowest CPU priority
+            nice -n 19 /usr/share/parental-privacy/update-blocklists.sh &
+        fi
+    else
+        # No backup at all (First run)? We have to download.
+        /usr/share/parental-privacy/update-blocklists.sh &
+    fi
 
 }
 
