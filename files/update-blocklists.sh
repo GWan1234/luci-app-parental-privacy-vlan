@@ -48,10 +48,15 @@ config_foreach handle_list "blocklist"
 # We combine all raw files, extract domains, sort uniquely, and re-format for dnsmasq.
 if [ "$(ls -A $TMP_DIR)" ]; then
     echo "Deduplicating and optimizing blocklists..."
+	PRE_COUNT=$(cat "$TMP_DIR"/*.raw 2>/dev/null | grep -c "address=/")
     cat "$TMP_DIR"/*.raw 2>/dev/null | \
         sed -n 's|.*/\([^/]*\)/.*|\1|p' | \
         sort -u | \
         awk '{ print "address=/"$1"/" }' > "$TMP_DIR/master.tmp"
+	
+	# Count Post-Dedupe lines
+    POST_COUNT=$(wc -l < "$TMP_DIR/master.tmp")
+    SAVED_COUNT=$((PRE_COUNT - POST_COUNT))
 else
     echo "No lists downloaded. Exiting."
     exit 1
@@ -84,6 +89,9 @@ uci -q batch <<EOI
   set parental_privacy.stats=status
   set parental_privacy.stats.last_update='$LAST_UPDATE'
   set parental_privacy.stats.update_duration='${DURATION}s'
+  set parental_privacy.stats.pre_dupe='$PRE_COUNT'
+  set parental_privacy.stats.post_dupe='$POST_COUNT'
+  set parental_privacy.stats.saved='$SAVED_COUNT'
   commit parental_privacy
 EOI
 
