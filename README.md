@@ -16,7 +16,7 @@
   - Detects all physical DSA LAN ports dynamically and tags them — no
     hardcoded port names.
   - Creates a br-lan.<vlan> subinterface with a dedicated subnet in the
-    172.28.<vlan>.0/24 range (e.g. VLAN 10 → 172.28.10.0/24).
+    172.28.<vlan>.0/24 range (e.g. VLAN 38 → 172.28.28.0/24).
   - Aborts cleanly with a log message if DSA is absent or swconfig is
     detected, allowing the bridge edition to be used instead.
   - Single-NAT: the WAN zone handles masquerade for all traffic; the kids
