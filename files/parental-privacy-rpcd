@@ -32,19 +32,23 @@ case "$1" in
         #   object and all json_get/@.field lookups work correctly.
         cat <<'EOF'
 {
-    "status":  {},
-    "apply":   {},
-    "extend":  {},
-    "remove":  {}
+    "status":           {},
+    "apply":            {},
+    "extend":           {},
+    "remove":           {},
+    "blocklist_apply":  {},
+    "blocklist_update": {}
 }
 EOF
         ;;
     call)
         case "$2" in
-            status) exec "$SCRIPTS/rpc-status.sh"  ;;
-            apply)  exec "$SCRIPTS/rpc-apply.sh"   ;;
-            extend) exec "$SCRIPTS/rpc-extend.sh"  ;;
-            remove) exec "$SCRIPTS/rpc-remove.sh"  ;;
+            status)           exec "$SCRIPTS/rpc-status.sh"  ;;
+            apply)            exec "$SCRIPTS/rpc-apply.sh"   ;;
+            extend)           exec "$SCRIPTS/rpc-extend.sh"  ;;
+            remove)           exec "$SCRIPTS/rpc-remove.sh"  ;;
+            blocklist_apply)  exec "$SCRIPTS/rpc-blocklist.sh" blocklist_apply ;;
+            blocklist_update) exec "$SCRIPTS/rpc-blocklist.sh" blocklist_update ;;
             *)
                 echo '{"error":"unknown method"}'
                 exit 1

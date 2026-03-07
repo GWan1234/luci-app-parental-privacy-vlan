@@ -186,6 +186,21 @@ if [ -f /etc/crontabs/root ]; then
     /etc/init.d/cron restart 2>/dev/null
 fi
 
+# ── DNS Blocklists — remove downloaded files and cron entry ──────────────────
+rm -f /etc/dnsmasq.kids.d/dns_blocklist.conf      2>/dev/null
+rm -f /etc/dnsmasq.kids.d/dns_blocklist.conf.bak  2>/dev/null
+# Remove the nightly update cron entry
+if [ -f /etc/crontabs/root ]; then
+    sed -i '/#kids-blocklist-update/d' /etc/crontabs/root
+    /etc/init.d/cron restart 2>/dev/null
+fi
+# Remove any remaining blocklist sections from UCI
+. /lib/functions.sh
+_del_bl() { uci -q delete "parental_privacy.$1" 2>/dev/null; }
+config_load parental_privacy 2>/dev/null
+config_foreach _del_bl "blocklist" 2>/dev/null
+
+
 # ── SafeSearch dnsmasq config (kids instance) ─────────────────────────────────
 rm -f /etc/dnsmasq.d/safesearch.conf       2>/dev/null
 rm -f /etc/dnsmasq.kids.d/safesearch.conf  2>/dev/null

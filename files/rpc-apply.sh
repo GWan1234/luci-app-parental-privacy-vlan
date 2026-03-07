@@ -414,6 +414,10 @@ if [ -n "$DNS" ]; then
     uci add_list dhcp.kids_dns.server="$PRI"
     [ -n "$SEC" ] && uci add_list dhcp.kids_dns.server="$SEC"
     uci set parental_privacy.default.kids_dns="$DNS"
+    # Ensure confdir is set so blocklist files in /etc/dnsmasq.kids.d are picked up
+    mkdir -p /etc/dnsmasq.kids.d
+    EXISTING_CONFDIR=$(uci -q get dhcp.kids_dns.confdir 2>/dev/null)
+    [ "$EXISTING_CONFDIR" != "/etc/dnsmasq.kids.d" ] &&         uci set dhcp.kids_dns.confdir='/etc/dnsmasq.kids.d'
 fi
 
 # ── SafeSearch ────────────────────────────────────────────────────────────────

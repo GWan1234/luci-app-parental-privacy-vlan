@@ -1,90 +1,192 @@
 #!/bin/sh
-# 3 AM Update script for Kids DNS Blocklists
-# Logic: Deduplicate in RAM (/tmp), then sync to Flash (/etc) for persistence.
+# /usr/share/parental-privacy/update-blocklists.sh
+#
+# Downloads enabled DNS blocklists for the kids dnsmasq instance.
+# Runs at 03:00 via cron (written by rpc-apply.sh).
+#
+# Safety features:
+#   1. RAM check — skips large lists (size_hint=large) when RAM < threshold,
+#      and auto-substitutes HaGeZi Normal→Light to prevent OOM crashes.
+#   2. dnsmasq --test validation before any live file is touched.
+#   3. Atomic rollback — if validation fails the previous list is restored.
+#   4. Deduplication in RAM (/tmp), single flash write per run.
+#
+# Lists are saved to /etc/dnsmasq.kids.d/ and picked up automatically
+# because the kids dnsmasq instance is configured with:
+#   list confdir '/etc/dnsmasq.kids.d'
+#
+# UCI storage:  parental_privacy.blocklist_<id> sections
+#               parental_privacy.stats  (last_update, counts, etc.)
 
 . /lib/functions.sh
 
-# Paths
+# ── Paths ────────────────────────────────────────────────────────────────────
 START_TIME=$(date +%s)
 KIDS_CONF_DIR="/etc/dnsmasq.kids.d"
 TMP_DIR="/tmp/blocklist_staging"
-LIVE_LIST="/tmp/dnsmasq.kids.d/master_blocklist.conf"
-BACKUP_LIST="/etc/parental-privacy/blocklist.backup"
-MEM_THRESHOLD=32768
+LIVE_FILE="${KIDS_CONF_DIR}/dns_blocklist.conf"
+BACKUP_FILE="${KIDS_CONF_DIR}/dns_blocklist.conf.bak"
 UCI_CONF="parental_privacy"
 
-# Setup directories
+# ── RAM threshold (kB) — lists flagged size_hint=large need this headroom ────
+# 32 MB free is a conservative minimum.  Most HaGeZi normal/pro lists
+# expand to 20–50 MB when loaded into dnsmasq's hash tables.
+MEM_THRESHOLD=32768
+
+# ── Setup ────────────────────────────────────────────────────────────────────
 mkdir -p "$TMP_DIR"
-mkdir -p "/tmp/dnsmasq.kids.d"
-mkdir -p "/etc/parental-privacy"
+mkdir -p "$KIDS_CONF_DIR"
 rm -f "$TMP_DIR"/*
 
-# 1. RAM Check (MemAvailable)
-FREE_MEM=$(grep MemAvailable /proc/meminfo | awk '{print $2}')
+# ── 1. RAM check ─────────────────────────────────────────────────────────────
+FREE_MEM=$(grep MemAvailable /proc/meminfo 2>/dev/null | awk '{print $2}')
 [ -z "$FREE_MEM" ] && FREE_MEM=$(grep MemFree /proc/meminfo | awk '{print $2}')
 LOW_MEM=0
 [ "$FREE_MEM" -lt "$MEM_THRESHOLD" ] && LOW_MEM=1
 
-# 2. Download loop
+if [ "$LOW_MEM" = "1" ]; then
+    logger -t "parental-privacy" "Low RAM (${FREE_MEM} kB free) — large lists will be skipped or substituted."
+fi
+
+# ── 2. Download loop ─────────────────────────────────────────────────────────
+DOWNLOAD_COUNT=0
+SKIP_COUNT=0
+
 handle_list() {
     local section="$1"
-    local enabled url name id
-    config_get_bool enabled "$section" enabled 0
+    local enabled id url size_hint
+
+    config_get_bool enabled  "$section" enabled  0
     [ "$enabled" -eq 0 ] && return
 
-    config_get id "$section" id
-    config_get url "$section" url
-    
-    # Low RAM swap for HaGeZi lists (multi.txt -> multi.light.txt)
-    [ "$LOW_MEM" -eq 1 ] && url=$(echo "$url" | sed 's/multi.txt/multi.light.txt/')
+    config_get id        "$section" id
+    config_get url       "$section" url
+    config_get size_hint "$section" size_hint "small"
 
-    wget -qO "$TMP_DIR/$id.raw" "$url"
+    # Low-RAM guard: skip large lists entirely, but swap HaGeZi Normal→Light
+    if [ "$LOW_MEM" = "1" ] && [ "$size_hint" = "large" ]; then
+        case "$url" in
+            */hagezi/dns-blocklists/*/dnsmasq/multi.txt)
+                url=$(echo "$url" | sed 's|/multi\.txt|/multi.light.txt|')
+                logger -t "parental-privacy" "Low RAM: substituted $id → multi.light"
+                ;;
+            */hagezi/dns-blocklists/*/dnsmasq/pro.txt)
+                url=$(echo "$url" | sed 's|/pro\.txt|/multi.light.txt|')
+                logger -t "parental-privacy" "Low RAM: substituted $id → multi.light"
+                ;;
+            *)
+                logger -t "parental-privacy" "Low RAM: skipping large list $id"
+                SKIP_COUNT=$((SKIP_COUNT + 1))
+                return
+                ;;
+        esac
+    fi
+
+    logger -t "parental-privacy" "Downloading $id from $url"
+    if wget -q --timeout=30 -O "$TMP_DIR/${id}.raw" "$url"; then
+        # Basic sanity: file must contain at least one dnsmasq address= or server= line
+        if grep -qE '^(address|server)=/' "$TMP_DIR/${id}.raw" 2>/dev/null; then
+            DOWNLOAD_COUNT=$((DOWNLOAD_COUNT + 1))
+            logger -t "parental-privacy" "Downloaded $id ($(wc -l < "$TMP_DIR/${id}.raw") lines)"
+        else
+            logger -t "parental-privacy" "Warning: $id returned no valid dnsmasq lines — skipping"
+            rm -f "$TMP_DIR/${id}.raw"
+        fi
+    else
+        logger -t "parental-privacy" "Warning: failed to download $id"
+        rm -f "$TMP_DIR/${id}.raw"
+    fi
 }
 
 config_load "$UCI_CONF"
 config_foreach handle_list "blocklist"
 
-# 3. Deduplication & Merging (CPU intensive, done in RAM)
-# We combine all raw files, extract domains, sort uniquely, and re-format for dnsmasq.
-if [ "$(ls -A $TMP_DIR)" ]; then
-    echo "Deduplicating and optimizing blocklists..."
-	PRE_COUNT=$(cat "$TMP_DIR"/*.raw 2>/dev/null | grep -c "address=/")
-    cat "$TMP_DIR"/*.raw 2>/dev/null | \
-        sed -n 's|.*/\([^/]*\)/.*|\1|p' | \
-        sort -u | \
-        awk '{ print "address=/"$1"/" }' > "$TMP_DIR/master.tmp"
-	
-	# Count Post-Dedupe lines
-    POST_COUNT=$(wc -l < "$TMP_DIR/master.tmp")
-    SAVED_COUNT=$((PRE_COUNT - POST_COUNT))
-else
-    echo "No lists downloaded. Exiting."
+# ── 3. Deduplication & merge (done in RAM) ───────────────────────────────────
+if [ "$DOWNLOAD_COUNT" -eq 0 ]; then
+    logger -t "parental-privacy" "No lists downloaded — nothing to do."
+    # Save stats showing zero
+    uci -q batch <<EOI
+  set parental_privacy.stats=status
+  set parental_privacy.stats.last_update='$(date +"%Y-%m-%d %H:%M:%S")'
+  set parental_privacy.stats.update_duration='0s'
+  set parental_privacy.stats.pre_dupe='0'
+  set parental_privacy.stats.post_dupe='0'
+  set parental_privacy.stats.saved='0'
+  set parental_privacy.stats.download_count='0'
+  set parental_privacy.stats.skip_count='$SKIP_COUNT'
+  commit parental_privacy
+EOI
+    rm -rf "$TMP_DIR"
+    exit 0
+fi
+
+logger -t "parental-privacy" "Deduplicating $DOWNLOAD_COUNT downloaded list(s)..."
+
+PRE_COUNT=$(cat "$TMP_DIR"/*.raw 2>/dev/null | grep -cE '^(address|server)=/')
+
+# Extract all address=/domain/ entries, deduplicate, re-emit canonical form.
+# Also pass through server=/<domain>/<ip> lines (used by some lists for
+# per-domain upstream overrides like SafeSearch).
+{
+    # address= lines: extract domain, deduplicate, re-format
+    cat "$TMP_DIR"/*.raw 2>/dev/null \
+        | grep -E '^address=/' \
+        | sed 's|^address=/||;s|/.*$||' \
+        | sort -u \
+        | awk '{ print "address=/" $1 "/" }'
+
+    # server= lines: pass through as-is after dedup
+    cat "$TMP_DIR"/*.raw 2>/dev/null \
+        | grep -E '^server=/' \
+        | sort -u
+} > "$TMP_DIR/master.tmp"
+
+POST_COUNT=$(wc -l < "$TMP_DIR/master.tmp")
+SAVED_COUNT=$((PRE_COUNT - POST_COUNT))
+
+# ── 4. Validate syntax with dnsmasq --test ───────────────────────────────────
+# Write to a temp conf location and ask dnsmasq to parse it.
+# dnsmasq --test exits 0 on success, non-zero on any syntax error.
+VALIDATE_CONF="$TMP_DIR/validate.conf"
+echo "conf-file=$TMP_DIR/master.tmp" > "$VALIDATE_CONF"
+
+if ! dnsmasq --test --conf-file="$VALIDATE_CONF" >/dev/null 2>&1; then
+    logger -t "parental-privacy" "ERROR: New blocklist failed dnsmasq syntax check — rolling back."
+
+    # Rollback: restore backup if it exists
+    if [ -f "$BACKUP_FILE" ]; then
+        cp "$BACKUP_FILE" "$LIVE_FILE"
+        logger -t "parental-privacy" "Rollback: restored previous list from $BACKUP_FILE"
+        /etc/init.d/dnsmasq reload
+    else
+        logger -t "parental-privacy" "Rollback: no backup available — removing broken list file."
+        rm -f "$LIVE_FILE"
+    fi
+
+    rm -rf "$TMP_DIR"
     exit 1
 fi
 
-# 4. Atomic Validation & Sync
-if [ -s "$TMP_DIR/master.tmp" ]; then
-    # Validate syntax before touching live files
-    if dnsmasq --test --servers-file="$TMP_DIR/master.tmp" > /dev/null 2>&1; then
-        # Update the LIVE list in RAM (for speed)
-        cp "$TMP_DIR/master.tmp" "$LIVE_LIST"
-        
-        # Update the BACKUP list in Flash (for persistence/reboots)
-        # We only write to Flash ONCE per 24 hours here.
-        cp "$TMP_DIR/master.tmp" "$BACKUP_LIST"
-        
-        echo "Update successful. Live RAM and Flash backup synced."
-    else
-        echo "Error: Deduplicated list failed syntax test. Rollback initiated."
-    fi
-fi
+# ── 5. Atomic deploy ─────────────────────────────────────────────────────────
+# Back up current live list before overwriting
+[ -f "$LIVE_FILE" ] && cp "$LIVE_FILE" "$BACKUP_FILE"
 
+# Deploy to the kids confdir (flash — persists across reboots)
+cp "$TMP_DIR/master.tmp" "$LIVE_FILE"
+
+logger -t "parental-privacy" "Blocklist deployed: $POST_COUNT entries (${SAVED_COUNT} duplicates removed)."
+
+# ── 6. Reload kids dnsmasq instance ─────────────────────────────────────────
+# The kids dnsmasq is managed through the main dnsmasq init, but only the
+# kids instance reads /etc/dnsmasq.kids.d/ due to its confdir option.
+/etc/init.d/dnsmasq reload
+logger -t "parental-privacy" "dnsmasq reloaded."
+
+# ── 7. Save stats to UCI ─────────────────────────────────────────────────────
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
 LAST_UPDATE=$(date +"%Y-%m-%d %H:%M:%S")
 
-# Save stats to UCI for the dashboard
-# We use a 'status' section to keep it separate from config
 uci -q batch <<EOI
   set parental_privacy.stats=status
   set parental_privacy.stats.last_update='$LAST_UPDATE'
@@ -92,11 +194,12 @@ uci -q batch <<EOI
   set parental_privacy.stats.pre_dupe='$PRE_COUNT'
   set parental_privacy.stats.post_dupe='$POST_COUNT'
   set parental_privacy.stats.saved='$SAVED_COUNT'
+  set parental_privacy.stats.download_count='$DOWNLOAD_COUNT'
+  set parental_privacy.stats.skip_count='$SKIP_COUNT'
   commit parental_privacy
 EOI
 
-logger -t "parental-privacy" "Blocklist update complete in ${DURATION} seconds."
+logger -t "parental-privacy" "Blocklist update complete in ${DURATION}s."
 
-# 5. Clean up and Reload dnsmasq
+# ── 8. Cleanup ───────────────────────────────────────────────────────────────
 rm -rf "$TMP_DIR"
-/etc/init.d/dnsmasq reload

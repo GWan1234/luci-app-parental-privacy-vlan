@@ -32,6 +32,19 @@ const callRemove = rpc.declare({
     expect: {}
 });
 
+const callBlocklistApply = rpc.declare({
+    object: 'parental-privacy',
+    method: 'blocklist_apply',
+    params: ['data'],
+    expect: {}
+});
+
+const callBlocklistUpdate = rpc.declare({
+    object: 'parental-privacy',
+    method: 'blocklist_update',
+    expect: {}
+});
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MAX_RANGES_PER_DAY = 4;
@@ -47,6 +60,13 @@ let toastTimer   = null;
 
 // Initialise schedule with empty arrays
 DAYS.forEach(d => { schedule[d] = []; });
+
+// ── Blocklist state ───────────────────────────────────────────────────────────
+const BLOCKLIST_CATALOG_URL = 'https://raw.githubusercontent.com/eddwatts/luci-app-parental-privacy-vlan/main/blocklists.json';
+let blCatalog       = [];   // fetched from GitHub
+let blEnabled       = {};   // { id: true/false } — loaded from UCI via status
+let blCustomEntries = [];   // user-added custom URLs
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function $(id) { return document.getElementById(id); }
@@ -425,6 +445,7 @@ async function updateStatus() {
     updateDeviceList(data.devices || []);
     updateScheduleStat();
     updateAccessStat(!!data.internet_blocked);
+    loadBlocklistState(data);
 }
 // ── Device list ───────────────────────────────────────────────────────────────
 const blocked = {};
@@ -619,6 +640,182 @@ async function saveAll() {
     }
 }
 
+
+// ── DNS Blocklists ────────────────────────────────────────────────────────────
+// Load the catalog JSON from GitHub and render the checklist panel.
+async function loadBlocklistCatalog() {
+    const panel = $('bl-catalog-panel');
+    const spinner = $('bl-spinner');
+    if (spinner) spinner.style.display = 'inline';
+
+    try {
+        const resp = await fetch(BLOCKLIST_CATALOG_URL + '?_=' + Date.now());
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        blCatalog = await resp.json();
+    } catch(e) {
+        if (panel) panel.innerHTML = `<div class="alert alert-warning">${_('Could not load blocklist catalog from GitHub. Check your internet connection or add lists manually below.')}</div>`;
+        if (spinner) spinner.style.display = 'none';
+        return;
+    }
+
+    if (spinner) spinner.style.display = 'none';
+    renderBlocklistCatalog();
+}
+
+function renderBlocklistCatalog() {
+    const panel = $('bl-catalog-panel');
+    if (!panel || !blCatalog.length) return;
+
+    // Group by provider
+    const byProvider = {};
+    blCatalog.forEach(entry => {
+        if (!byProvider[entry.provider]) byProvider[entry.provider] = [];
+        byProvider[entry.provider].push(entry);
+    });
+
+    let html = '';
+    Object.keys(byProvider).sort().forEach(provider => {
+        html += `<div class="bl-provider-group">
+            <div class="bl-provider-label">${provider}</div>`;
+        byProvider[provider].forEach(entry => {
+            const checked = blEnabled[entry.id] ? 'checked' : '';
+            const sizeTag = entry.size_hint === 'large'
+                ? `<span class="bl-size-tag bl-size-large">${_('Large — needs 32 MB+ RAM')}</span>`
+                : `<span class="bl-size-tag bl-size-small">${_('Small')}</span>`;
+            html += `<label class="bl-entry ${checked ? 'bl-entry-active' : ''}">
+                <input type="checkbox" class="bl-check" data-id="${entry.id}"
+                    ${checked} onchange="toggleBlocklist(this,'${entry.id}')">
+                <div class="bl-entry-info">
+                    <strong>${entry.name}</strong>${sizeTag}
+                    <div class="bl-entry-desc">${entry.description}</div>
+                    <div class="bl-entry-url">${entry.url}</div>
+                </div>
+            </label>`;
+        });
+        html += `</div>`;
+    });
+
+    panel.innerHTML = html;
+}
+
+function toggleBlocklist(el, id) {
+    blEnabled[id] = el.checked;
+    const label = el.closest('label');
+    if (label) label.classList.toggle('bl-entry-active', el.checked);
+    saveBlocklistSelections();
+    markUnsaved();
+}
+
+// Persist enabled list IDs to UCI via the blocklist_apply RPC
+async function saveBlocklistSelections() {
+    const custom = blCustomEntries.filter(e => e.url.trim());
+    try {
+        await callBlocklistApply({
+            enabled: blEnabled,
+            custom: custom
+        });
+    } catch(e) {
+        // Non-fatal — will be saved on next full Save & Apply
+    }
+}
+
+// Add a custom blocklist URL
+function addCustomBlocklist() {
+    const nameEl = $('bl-custom-name');
+    const urlEl  = $('bl-custom-url');
+    const name = nameEl ? nameEl.value.trim() : '';
+    const url  = urlEl  ? urlEl.value.trim()  : '';
+
+    if (!url) { showToast('err', _('Please enter a URL for the custom list.')); return; }
+    if (!url.startsWith('http')) { showToast('err', _('URL must start with http:// or https://')); return; }
+
+    const id = 'custom_' + Date.now();
+    blCustomEntries.push({ id, name: name || url, url });
+    blEnabled[id] = true;
+
+    if (nameEl) nameEl.value = '';
+    if (urlEl)  urlEl.value  = '';
+
+    renderCustomEntries();
+    saveBlocklistSelections();
+    markUnsaved();
+    showToast('ok', _('Custom list added.'));
+}
+
+function removeCustomBlocklist(id) {
+    blCustomEntries = blCustomEntries.filter(e => e.id !== id);
+    delete blEnabled[id];
+    renderCustomEntries();
+    saveBlocklistSelections();
+    markUnsaved();
+}
+
+function renderCustomEntries() {
+    const list = $('bl-custom-list');
+    if (!list) return;
+    list.innerHTML = '';
+    blCustomEntries.forEach(entry => {
+        const row = document.createElement('div');
+        row.className = 'bl-custom-row';
+        row.innerHTML =
+            `<div class="bl-custom-info">` +
+            `<strong>${entry.name}</strong>` +
+            `<div class="bl-entry-url">${entry.url}</div></div>` +
+            `<button class="cbi-button cbi-button-remove" onclick="removeCustomBlocklist('${entry.id}')">${_('Remove')}</button>`;
+        list.appendChild(row);
+    });
+    $('bl-custom-empty').style.display = blCustomEntries.length ? 'none' : 'block';
+}
+
+// Trigger an immediate blocklist update (runs the shell script via RPC)
+async function triggerBlocklistUpdate() {
+    const btn = $('bl-update-btn');
+    if (btn) { btn.disabled = true; btn.textContent = _('Updating…'); }
+    addLog('ok', _('Manual blocklist update triggered…'));
+    try {
+        const data = await callBlocklistUpdate();
+        if (data && data.success) {
+            showToast('ok', _('Blocklist update started in background.'));
+            addLog('ok', _('Blocklist update running — check status in a minute.'));
+        } else {
+            showToast('err', _('Update failed: ') + (data ? data.error : 'unknown'));
+        }
+    } catch(e) {
+        showToast('err', _('Connection failed'));
+    }
+    if (btn) { btn.disabled = false; btn.textContent = _('Update Now'); }
+}
+
+// Populate blEnabled from the status RPC response
+function loadBlocklistState(statusData) {
+    if (!statusData || !statusData.blocklists) return;
+    blEnabled = {};
+    const lists = statusData.blocklists;
+    if (Array.isArray(lists)) {
+        lists.forEach(item => {
+            blEnabled[item.id] = !!item.enabled;
+            // Restore custom entries
+            if (item.custom && item.url) {
+                blCustomEntries.push({ id: item.id, name: item.name || item.url, url: item.url });
+            }
+        });
+    }
+    renderBlocklistCatalog();
+    renderCustomEntries();
+
+    // Update stats display
+    if (statusData.dns_stats) {
+        const s = statusData.dns_stats;
+        const el = $('bl-stat-text');
+        if (el && s.last_update && s.last_update !== 'Never') {
+            el.textContent = _('Last update: ') + s.last_update +
+                ' — ' + s.post_dupe + _(' entries') +
+                (s.saved > 0 ? ' (' + s.saved + _(' dupes removed') + ')' : '') +
+                (s.skip_count > 0 ? ' · ' + s.skip_count + _(' lists skipped (low RAM)') : '');
+        }
+    }
+}
+
 // ── Remove ────────────────────────────────────────────────────────────────────
 async function removeNetwork() {
     if (!confirm(_('Remove Kids Network? This will delete all Kids WiFi configuration.\n\nYour schedule will be saved to /etc/parental-privacy/schedule.backup and restored automatically if you reinstall.')))
@@ -738,6 +935,23 @@ return view.extend({
 .kn-log .log-ok { color:#5cb85c; }
 .kn-log .log-warn { color:#f0ad4e; }
 .kn-log .log-error { color:#d9534f; }
+
+/* Blocklists */
+.bl-provider-group { margin-bottom:.85rem; }
+.bl-provider-label { font-size:.72rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:#888; margin-bottom:.35rem; }
+.bl-entry { display:flex; align-items:flex-start; gap:.65rem; padding:.55rem .65rem; border:1px solid #eee; border-radius:4px; margin-bottom:.3rem; cursor:pointer; transition:background .12s,border-color .12s; }
+.bl-entry-active { background:#f0f8ff; border-color:#337ab7; }
+.bl-entry input[type=checkbox] { margin-top:.2rem; flex-shrink:0; }
+.bl-entry-info { flex:1; }
+.bl-entry-info strong { font-size:.88rem; }
+.bl-entry-desc { font-size:.78rem; color:#666; margin:.1rem 0; }
+.bl-entry-url { font-family:monospace; font-size:.72rem; color:#999; word-break:break-all; }
+.bl-size-tag { display:inline-block; font-size:.65rem; padding:.05rem .3rem; border-radius:3px; margin-left:.4rem; border:1px solid; vertical-align:middle; }
+.bl-size-large { color:#f0ad4e; border-color:#f0ad4e; }
+.bl-size-small { color:#5cb85c; border-color:#5cb85c; }
+.bl-custom-row { display:flex; align-items:flex-start; gap:.6rem; padding:.5rem .65rem; border:1px solid #eee; border-radius:4px; margin-bottom:.3rem; }
+.bl-custom-info { flex:1; }
+.bl-stat-bar-bl { background:#f8f8f8; border:1px solid #ddd; border-radius:4px; padding:.5rem .85rem; font-size:.8rem; color:#555; margin-bottom:.75rem; }
 /* Toast */
 .kn-toast { position:fixed; bottom:1.25rem; right:1.25rem; background:#fff; border:1px solid #ddd; border-radius:4px; padding:.65rem 1rem; display:flex; align-items:center; gap:.6rem; box-shadow:0 4px 12px rgba(0,0,0,.15); transform:translateY(60px); opacity:0; transition:all .3s; z-index:9999; max-width:300px; font-size:.88rem; }
 .kn-toast.show { transform:none; opacity:1; }
@@ -1085,6 +1299,58 @@ ${css}
   </div>
 </div>
 
+<!-- Additional Protection — DNS Blocklists -->
+<div class="cbi-section">
+  <h3 class="cbi-section-title">${_('Additional Protection — DNS Blocklists')}
+    <span class="cbi-section-descr">${_('Blocks are applied at DNS level on the kids dnsmasq instance only. Updated nightly at 3 AM.')}</span>
+  </h3>
+  <div class="cbi-section-node">
+
+    <div class="bl-stat-bar-bl" id="bl-stat-text">${_('Loading update statistics…')}</div>
+
+    <div class="alert alert-info" style="font-size:.83rem; margin-bottom:.85rem;">
+      <strong>${_('How this works')}</strong><br>
+      ${_('Checked lists are downloaded and merged into a single deduplicated file at /etc/dnsmasq.kids.d/dns_blocklist.conf, which the kids dnsmasq instance picks up automatically via its confdir setting. Large HaGeZi lists are automatically substituted with the Light version when router RAM is below 32 MB free. Updates run at 3 AM to avoid peak usage. Each update is syntax-checked before going live; if it fails, the previous list is restored automatically.')}
+    </div>
+
+    <!-- Catalog loaded from GitHub -->
+    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem; margin-bottom:.65rem;">
+      <strong>${_('Pre-configured Lists')}</strong>
+      <span id="bl-spinner" style="display:none; font-size:.8rem; color:#888;">${_('Loading catalog…')}</span>
+      <button class="cbi-button" onclick="loadBlocklistCatalog()" style="font-size:.8rem; padding:.25rem .75rem;">&#8635; ${_('Reload Catalog')}</button>
+    </div>
+    <div id="bl-catalog-panel">
+      <em style="color:#aaa; font-size:.85rem;">${_('Loading from GitHub…')}</em>
+    </div>
+
+    <!-- Manual / custom lists -->
+    <div style="margin-top:1.1rem;">
+      <strong>${_('Custom Lists')}</strong>
+      <p class="cbi-value-description">${_('Add any dnsmasq-format blocklist URL (address= or server= lines).')}</p>
+      <div id="bl-custom-list"></div>
+      <div id="bl-custom-empty" style="font-size:.82rem; color:#aaa; margin:.3rem 0;">${_('No custom lists added yet.')}</div>
+
+      <div style="display:flex; gap:.5rem; flex-wrap:wrap; margin-top:.6rem;">
+        <input type="text" class="cbi-input-text" id="bl-custom-name"
+               placeholder="${_('Label (optional)')}" style="max-width:180px; font-size:.85rem;">
+        <input type="text" class="cbi-input-text" id="bl-custom-url"
+               placeholder="${_('https://example.com/blocklist.txt')}" style="flex:1; min-width:200px; font-size:.85rem;">
+        <button class="cbi-button cbi-button-add" onclick="addCustomBlocklist()">+ ${_('Add')}</button>
+      </div>
+    </div>
+
+    <!-- Manual update trigger -->
+    <div style="margin-top:1.1rem; padding-top:.75rem; border-top:1px solid #eee; display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+      <button class="cbi-button" id="bl-update-btn" onclick="triggerBlocklistUpdate()">
+        &#9654; ${_('Update Now')}
+      </button>
+      <span class="cbi-value-description" style="margin:0;">${_('Runs the download &amp; dedup immediately rather than waiting for 3 AM.')}</span>
+    </div>
+
+  </div>
+</div>
+
+
 <!-- Activity Log -->
 <div class="cbi-section">
   <h3 class="cbi-section-title">${_('Activity Log')}</h3>
@@ -1145,7 +1411,12 @@ ${css}
             toggleMaster, pickRadio, pickDNS, updateCustomPreview,
             useSuggestedSSID, togglePanel, applyPreset, addRange,
             removeRange, updateRange, grantExtension, saveAll,
-            removeNetwork, markUnsaved, toggleBlock, updateAccessStat
+            removeNetwork, markUnsaved, toggleBlock, updateAccessStat,
+            toggleBlocklist, addCustomBlocklist, removeCustomBlocklist,
+            loadBlocklistCatalog, triggerBlocklistUpdate
         });
+
+        // Load blocklist catalog from GitHub after DOM is ready
+        loadBlocklistCatalog();
     }
 });

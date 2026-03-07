@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: luci-app-parental-privacy-vlan 1.2.0\n"
-"POT-Creation-Date: 2026-03-05 00:00+0000
-"PO-Revision-Date: 2026-03-05 00:00+0000
+"POT-Creation-Date: 2026-03-07 00:00+0000
+"PO-Revision-Date: 2026-03-07 00:00+0000
 "Last-Translator: Edward Watts <edward@example.com>
 "Language-Team: English <en@li.org>
 "MIME-Version: 1.0\n"
@@ -686,3 +686,136 @@ msgstr "Block Undesirable Apps"
 
 msgid "Prevents access to TikTok and Snapchat domains."
 msgstr "Prevents access to TikTok and Snapchat domains."
+# ── Additional Protection — DNS Blocklists (dashboard.js) ─────────────────────
+
+#: dashboard.js:1304
+msgid "Additional Protection — DNS Blocklists"
+msgstr "Additional Protection — DNS Blocklists"
+
+#: dashboard.js:1305
+msgid "Blocks are applied at DNS level on the kids dnsmasq instance only. Updated nightly at 3 AM."
+msgstr "Blocks are applied at DNS level on the kids dnsmasq instance only. Updated nightly at 3 AM."
+
+#: dashboard.js:1312
+msgid "How this works"
+msgstr "How this works"
+
+#: dashboard.js:1313
+msgid "Checked lists are downloaded and merged into a single deduplicated file at /etc/dnsmasq.kids.d/dns_blocklist.conf, which the kids dnsmasq instance picks up automatically via its confdir setting. Large HaGeZi lists are automatically substituted with the Light version when router RAM is below 32 MB free. Updates run at 3 AM to avoid peak usage. Each update is syntax-checked before going live; if it fails, the previous list is restored automatically."
+msgstr "Checked lists are downloaded and merged into a single deduplicated file at /etc/dnsmasq.kids.d/dns_blocklist.conf, which the kids dnsmasq instance picks up automatically via its confdir setting. Large HaGeZi lists are automatically substituted with the Light version when router RAM is below 32 MB free. Updates run at 3 AM to avoid peak usage. Each update is syntax-checked before going live; if it fails, the previous list is restored automatically."
+
+#: dashboard.js:1309
+msgid "Loading update statistics…"
+msgstr "Loading update statistics…"
+
+#: dashboard.js:811
+msgid "Last update: "
+msgstr "Last update: "
+
+#: dashboard.js:812
+msgid " entries"
+msgstr " entries"
+
+#: dashboard.js:813
+msgid " dupes removed"
+msgstr " dupes removed"
+
+#: dashboard.js:814
+msgid " lists skipped (low RAM)"
+msgstr " lists skipped (low RAM)"
+
+#: dashboard.js:1318
+msgid "Pre-configured Lists"
+msgstr "Pre-configured Lists"
+
+#: dashboard.js:1319
+msgid "Loading catalog…"
+msgstr "Loading catalog…"
+
+#: dashboard.js:1320
+msgid "Reload Catalog"
+msgstr "Reload Catalog"
+
+#: dashboard.js:1323
+msgid "Loading from GitHub…"
+msgstr "Loading from GitHub…"
+
+#: dashboard.js:656
+msgid "Could not load blocklist catalog from GitHub. Check your internet connection or add lists manually below."
+msgstr "Could not load blocklist catalog from GitHub. Check your internet connection or add lists manually below."
+
+#: dashboard.js:683
+msgid "Large — needs 32 MB+ RAM"
+msgstr "Large — needs 32 MB+ RAM"
+
+#: dashboard.js:684
+msgid "Small"
+msgstr "Small"
+
+#: dashboard.js:1328
+msgid "Custom Lists"
+msgstr "Custom Lists"
+
+#: dashboard.js:1329
+msgid "Add any dnsmasq-format blocklist URL (address= or server= lines)."
+msgstr "Add any dnsmasq-format blocklist URL (address= or server= lines)."
+
+#: dashboard.js:1331
+msgid "No custom lists added yet."
+msgstr "No custom lists added yet."
+
+#: dashboard.js:1335
+msgid "Label (optional)"
+msgstr "Label (optional)"
+
+#: dashboard.js:1337
+msgid "https://example.com/blocklist.txt"
+msgstr "https://example.com/blocklist.txt"
+
+#: dashboard.js:1304
+msgid "Add"
+msgstr "Add"
+
+#: dashboard.js:764
+msgid "Remove"
+msgstr "Remove"
+
+#: dashboard.js:742
+msgid "Custom list added."
+msgstr "Custom list added."
+
+#: dashboard.js:729
+msgid "Please enter a URL for the custom list."
+msgstr "Please enter a URL for the custom list."
+
+#: dashboard.js:730
+msgid "URL must start with http:// or https://"
+msgstr "URL must start with http:// or https://"
+
+#: dashboard.js:786
+msgid "Update Now"
+msgstr "Update Now"
+
+#: dashboard.js:1347
+msgid "Runs the download &amp; dedup immediately rather than waiting for 3 AM."
+msgstr "Runs the download &amp; dedup immediately rather than waiting for 3 AM."
+
+#: dashboard.js:773
+msgid "Updating…"
+msgstr "Updating…"
+
+#: dashboard.js:774
+msgid "Manual blocklist update triggered…"
+msgstr "Manual blocklist update triggered…"
+
+#: dashboard.js:778
+msgid "Blocklist update started in background."
+msgstr "Blocklist update started in background."
+
+#: dashboard.js:779
+msgid "Blocklist update running — check status in a minute."
+msgstr "Blocklist update running — check status in a minute."
+
+#: dashboard.js:781
+msgid "Update failed: "
+msgstr "Update failed: "

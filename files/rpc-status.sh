@@ -239,6 +239,41 @@ if [ -n "$CURRENT_RANGES" ]; then
     done
 fi
 
+
+# ── Blocklist state ───────────────────────────────────────────────────────────
+# Build a JSON array of { id, name, url, enabled, custom } for all blocklist
+# UCI sections so the dashboard can restore checkbox state on load.
+BLOCKLISTS_JSON=""
+. /lib/functions.sh
+load_blocklist_section() {
+    local section="$1"
+    local id name url enabled custom size_hint
+    config_get id        "$section" id        "$section"
+    config_get name      "$section" name      "$id"
+    config_get url       "$section" url       ""
+    config_get_bool enabled "$section" enabled 0
+    config_get_bool custom  "$section" custom  0
+    config_get size_hint "$section" size_hint "small"
+
+    local en_bool="false"
+    [ "$enabled" = "1" ] && en_bool="true"
+    local cust_bool="false"
+    [ "$custom" = "1" ] && cust_bool="true"
+
+    # Escape any double quotes in name/url
+    name=$(echo "$name" | sed 's/"/\\"/g')
+    url=$(echo "$url" | sed 's/"/\\"/g')
+
+    local entry="{\"id\":\"$id\",\"name\":\"$name\",\"url\":\"$url\",\"enabled\":$en_bool,\"custom\":$cust_bool}"
+    if [ -z "$BLOCKLISTS_JSON" ]; then
+        BLOCKLISTS_JSON="$entry"
+    else
+        BLOCKLISTS_JSON="$BLOCKLISTS_JSON,$entry"
+    fi
+}
+config_load parental_privacy
+config_foreach load_blocklist_section "blocklist"
+
 # ── Output JSON ───────────────────────────────────────────────────────────────
 cat <<EOF
 {
@@ -277,6 +312,7 @@ cat <<EOF
     "schedule": {
         $SCHEDULE
     },
-    "schedule_active": $SCHEDULE_ACTIVE
+    "schedule_active": $SCHEDULE_ACTIVE,
+    "blocklists": [$BLOCKLISTS_JSON]
 }
 EOF
