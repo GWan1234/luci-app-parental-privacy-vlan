@@ -45,6 +45,19 @@ const callBlocklistUpdate = rpc.declare({
     expect: {}
 });
 
+const callPauseDevice = rpc.declare({
+    object: 'parental-privacy',
+    method: 'pause_device',
+    params: ['data'],
+    expect: {}
+});
+
+const callListPaused = rpc.declare({
+    object: 'parental-privacy',
+    method: 'list_paused',
+    expect: {}
+});
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const MAX_RANGES_PER_DAY = 4;
@@ -448,6 +461,8 @@ async function updateStatus() {
     loadBlocklistState(data);
 }
 // ── Device list ───────────────────────────────────────────────────────────────
+// paused: tracks MAC → true/false for optimistic UI updates before RPC confirms
+const paused = {};
 const blocked = {};
 
 function updateDeviceList(devices) {
@@ -464,22 +479,96 @@ function updateDeviceList(devices) {
             ? `exp ${Math.round(expSecs / 60)}m`
             : 'expired';
 
+        // Use server-side paused state on first render; optimistic local state
+        // takes over after the user clicks Pause/Resume in this session.
+        if (typeof paused[dev.mac] === 'undefined') {
+            paused[dev.mac] = !!dev.paused;
+        }
+
+        const isPaused = !!paused[dev.mac];
+
         const row = document.createElement('div');
-        row.className = 'kn-device-row';
+        row.className = 'kn-device-row' + (isPaused ? ' kn-device-paused' : '');
+        row.id = `device-row-${dev.mac.replace(/:/g, '')}`;
+
         row.innerHTML =
-            `<div class="kn-device-dot online"></div>` +
-            `<div style="flex:1"><div><strong>${dev.name}</strong></div>` +
-            `<div class="kn-device-mac">${dev.mac}</div></div>` +
+            `<div class="kn-device-dot ${isPaused ? 'paused' : 'online'}"></div>` +
+            `<div style="flex:1">` +
+              `<div><strong>${dev.name}</strong>` +
+              (isPaused ? ` <span class="kn-paused-badge">${_('Paused')}</span>` : '') +
+              `</div>` +
+              `<div class="kn-device-mac">${dev.mac}</div>` +
+            `</div>` +
             `<div class="kn-device-ip">${dev.ip}</div>` +
             `<div class="kn-device-time">${timeStr}</div>` +
+            `<button class="cbi-button kn-pause-btn${isPaused ? ' kn-btn-resume' : ' kn-btn-pause'}"
+                id="pause-btn-${dev.mac.replace(/:/g, '')}"
+                onclick="togglePause(${JSON.stringify(dev.mac)}, ${JSON.stringify(dev.name)}, this)">` +
+            (isPaused ? `&#9654; ${_('Resume')}` : `&#9646;&#9646; ${_('Pause')}`) +
+            `</button>` +
             `<button class="cbi-button${blocked[dev.mac] ? ' cbi-button-remove' : ''}"
                 onclick="toggleBlock(${i},this,${JSON.stringify(dev)})">` +
             (blocked[dev.mac] ? _('Unblock') : _('Block')) + `</button>`;
+
         list.appendChild(row);
     });
 
     $('stat-devices').textContent   = count;
     $('devices-count').textContent  = count + ' online';
+}
+
+async function togglePause(mac, name, btn) {
+    const isPaused = !!paused[mac];
+    const action   = isPaused ? 'del' : 'add';
+    const macId    = mac.replace(/:/g, '');
+    const row      = $(`device-row-${macId}`);
+
+    // Optimistic UI update — flip immediately, revert on error
+    paused[mac] = !isPaused;
+    _applyPauseUI(mac, macId, row, btn, paused[mac]);
+
+    try {
+        await callPauseDevice({ action, mac });
+        const verb = paused[mac] ? 'Paused' : 'Resumed';
+        addLog(paused[mac] ? 'warn' : 'ok', `${verb}: ${name} (${mac})`);
+        showToast(paused[mac] ? 'warn' : 'ok',
+                  paused[mac]
+                    ? `⏸ ${name} paused — internet cut immediately`
+                    : `▶ ${name} resumed`);
+    } catch(e) {
+        // Revert on failure
+        paused[mac] = isPaused;
+        _applyPauseUI(mac, macId, row, btn, paused[mac]);
+        showToast('err', `Failed to ${action === 'add' ? 'pause' : 'resume'} ${name}`);
+        addLog('err', `RPC error toggling pause for ${mac}: ${e}`);
+    }
+}
+
+function _applyPauseUI(mac, macId, row, btn, nowPaused) {
+    if (!row || !btn) return;
+    row.className = 'kn-device-row' + (nowPaused ? ' kn-device-paused' : '');
+
+    const dot = row.querySelector('.kn-device-dot');
+    if (dot) dot.className = 'kn-device-dot ' + (nowPaused ? 'paused' : 'online');
+
+    // Update or remove the "Paused" badge
+    const nameDiv = row.querySelector('div > strong')?.parentElement;
+    if (nameDiv) {
+        const badge = nameDiv.querySelector('.kn-paused-badge');
+        if (nowPaused && !badge) {
+            const b = document.createElement('span');
+            b.className = 'kn-paused-badge';
+            b.textContent = _('Paused');
+            nameDiv.appendChild(b);
+        } else if (!nowPaused && badge) {
+            badge.remove();
+        }
+    }
+
+    btn.className = 'cbi-button kn-pause-btn ' + (nowPaused ? 'kn-btn-resume' : 'kn-btn-pause');
+    btn.innerHTML = nowPaused
+        ? `&#9654; ${_('Resume')}`
+        : `&#9646;&#9646; ${_('Pause')}`;
 }
 
 function toggleBlock(i, btn, dev) {
@@ -920,13 +1009,21 @@ return view.extend({
 .kn-range-row { display:flex; align-items:center; flex-wrap:wrap; gap:.25rem; }
 .kn-time-input { width:110px; font-family:monospace; }
 /* Devices */
-.kn-device-row { display:flex; align-items:center; gap:.6rem; padding:.5rem .75rem; border:1px solid #eee; border-radius:4px; margin-bottom:.35rem; }
+.kn-device-row { display:flex; align-items:center; gap:.6rem; padding:.5rem .75rem; border:1px solid #eee; border-radius:4px; margin-bottom:.35rem; transition:background .2s, border-color .2s; }
+.kn-device-paused { background:#fff8f0; border-color:#f0ad4e !important; }
 .kn-device-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .kn-device-dot.online { background:#5cb85c; }
 .kn-device-dot.offline { background:#ccc; }
+.kn-device-dot.paused { background:#f0ad4e; box-shadow:0 0 4px #f0ad4e; }
 .kn-device-mac { font-family:monospace; font-size:.75rem; color:#888; }
 .kn-device-ip { font-family:monospace; font-size:.75rem; color:#337ab7; margin-left:auto; }
 .kn-device-time { font-size:.75rem; color:#888; white-space:nowrap; }
+.kn-paused-badge { display:inline-block; background:#f0ad4e; color:#fff; font-size:.68rem; font-weight:600; padding:.05rem .35rem; border-radius:3px; margin-left:.4rem; vertical-align:middle; letter-spacing:.03em; }
+.kn-pause-btn { font-size:.78rem; padding:.2rem .55rem; white-space:nowrap; }
+.kn-btn-pause { background:#f0f0f0; border-color:#bbb; color:#555; }
+.kn-btn-pause:hover { background:#e8e8e8; border-color:#999; }
+.kn-btn-resume { background:#fff3cd; border-color:#f0ad4e; color:#8a6d3b; }
+.kn-btn-resume:hover { background:#ffe8a0; border-color:#d9930a; }
 /* Unsaved */
 .kn-unsaved { display:inline-flex; align-items:center; gap:.3rem; background:#ffc; border:1px solid #e6b800; color:#7a6000; border-radius:3px; padding:.1rem .45rem; font-size:.75rem; }
 /* Log */
@@ -1411,9 +1508,9 @@ ${css}
             toggleMaster, pickRadio, pickDNS, updateCustomPreview,
             useSuggestedSSID, togglePanel, applyPreset, addRange,
             removeRange, updateRange, grantExtension, saveAll,
-            removeNetwork, markUnsaved, toggleBlock, updateAccessStat,
-            toggleBlocklist, addCustomBlocklist, removeCustomBlocklist,
-            loadBlocklistCatalog, triggerBlocklistUpdate
+            removeNetwork, markUnsaved, toggleBlock, togglePause,
+            updateAccessStat, toggleBlocklist, addCustomBlocklist,
+            removeCustomBlocklist, loadBlocklistCatalog, triggerBlocklistUpdate
         });
 
         // Load blocklist catalog from GitHub after DOM is ready

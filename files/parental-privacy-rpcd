@@ -37,7 +37,9 @@ case "$1" in
     "extend":           {},
     "remove":           {},
     "blocklist_apply":  {},
-    "blocklist_update": {}
+    "blocklist_update": {},
+    "pause_device":     {},
+    "list_paused":      {}
 }
 EOF
         ;;
@@ -49,6 +51,8 @@ EOF
             remove)           exec "$SCRIPTS/rpc-remove.sh"  ;;
             blocklist_apply)  exec "$SCRIPTS/rpc-blocklist.sh" blocklist_apply ;;
             blocklist_update) exec "$SCRIPTS/rpc-blocklist.sh" blocklist_update ;;
+            pause_device)     exec "$SCRIPTS/rpc-pause.sh"   ;;
+            list_paused)      exec "$SCRIPTS/rpc-list-paused.sh" ;;
             *)
                 echo '{"error":"unknown method"}'
                 exit 1

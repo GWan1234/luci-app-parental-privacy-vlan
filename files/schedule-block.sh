@@ -52,7 +52,7 @@ enable_block() {
     logger -t parental-privacy "Schedule block ENABLED — kids internet access blocked"
 }
 
-# ── disable: remove the block rule entirely ───────────────────────────────────
+# ── disable: remove the block rule and clear any manually-paused devices ──────
 disable_block() {
     if rule_exists; then
         uci delete firewall.${RULE_NAME}
@@ -62,6 +62,10 @@ disable_block() {
     else
         logger -t parental-privacy "Schedule block disable: rule not present, nothing to do"
     fi
+
+    # Auto-unpause any devices that were individually paused so they regain
+    # access with the rest of the network at the start of the new session.
+    /usr/share/parental-privacy/pause-device.sh clear
 }
 
 # ── status: report current state ─────────────────────────────────────────────

@@ -158,6 +158,20 @@ PRE=$(uci -q get parental_privacy.stats.pre_dupe || echo "0")
 POST=$(uci -q get parental_privacy.stats.post_dupe || echo "0")
 SAVED=$(uci -q get parental_privacy.stats.saved || echo "0")
 
+# ── Paused devices (nftables set) ────────────────────────────────────────────
+# Read the kids_paused_macs nftables set so the dashboard can render
+# each device's Pause/Resume button in the correct state on load.
+PAUSED_MACS_JSON=""
+PAUSED_LIST=$(nft list set inet fw4 kids_paused_macs 2>/dev/null \
+    | grep -oE '([0-9a-fA-F]{2}:){5}[0-9a-fA-F]{2}')
+for pmac in $PAUSED_LIST; do
+    if [ -z "$PAUSED_MACS_JSON" ]; then
+        PAUSED_MACS_JSON="\"$pmac\""
+    else
+        PAUSED_MACS_JSON="$PAUSED_MACS_JSON,\"$pmac\""
+    fi
+done
+
 # ── DHCP leases ───────────────────────────────────────────────────────────────
 DEVICES=""
 if [ -f /tmp/dhcp.leases ]; then
@@ -166,7 +180,10 @@ if [ -f /tmp/dhcp.leases ]; then
             ${KIDS_SUBNET}*)
                 [ "$name" = "*" ] && name="Unknown"
                 name=$(echo "$name" | sed 's/"/\\"/g')
-                ENTRY="{\"mac\":\"$mac\",\"ip\":\"$ip\",\"name\":\"$name\",\"expires\":$exp}"
+                # Check if this MAC is in the paused set
+                PAUSED_FLAG="false"
+                echo "$PAUSED_LIST" | grep -qi "^$mac$" && PAUSED_FLAG="true"
+                ENTRY="{\"mac\":\"$mac\",\"ip\":\"$ip\",\"name\":\"$name\",\"expires\":$exp,\"paused\":$PAUSED_FLAG}"
                 if [ -z "$DEVICES" ]; then
                     DEVICES="$ENTRY"
                 else
@@ -296,6 +313,7 @@ cat <<EOF
     "kids_ports": [$KIDS_PORTS],
     "available_ports": [$AVAILABLE_PORTS],
     "devices": [$DEVICES],
+    "paused_macs": [$PAUSED_MACS_JSON],
 	dns_stats": {
 	  "last_update": "$LAST_UPDATE",
 	  "update_duration": "$DURATION",
